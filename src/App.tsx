@@ -8,7 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import Settings from "./pages/auth/Settings";
+import UserSettings from "./pages/auth/Settings";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 import ClientLayout from "./components/layout/ClientLayout";
@@ -22,7 +22,7 @@ import MaterialItems from "./pages/admin/items/Materials";
 import AccessoryItems from "./pages/admin/items/Accessories";
 import ComponentItems from "./pages/admin/items/Components";
 import Projects from "./pages/admin/Projects";
-import Settings from "./pages/admin/Settings";
+import AdminSettings from "./pages/admin/Settings";
 import FurnitureCalculator from "./pages/calculator/FurnitureCalculator";
 import CatalogPage from "./pages/catalog/index";
 import ClientOfferPage from "./pages/client/offer";
@@ -45,7 +45,7 @@ const App = () => (
             {/* Auth Routes */}
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/register" element={<Register />} />
-            <Route path="/auth/settings" element={<Settings />} />
+            <Route path="/auth/settings" element={<UserSettings />} />
             
             {/* Admin Routes */}
             <Route path="/admin/*" element={
@@ -70,7 +70,7 @@ const App = () => (
                     <Route path="projects" element={<Projects />} />
                     
                     {/* Settings */}
-                    <Route path="settings" element={<Settings />} />
+                    <Route path="settings" element={<AdminSettings />} />
                   </Routes>
                 </AdminLayout>
               </ProtectedRoute>

@@ -12,40 +12,35 @@ interface EditProjectModalProps {
   open: boolean;
   onClose: () => void;
   onProjectUpdated: () => void;
-  projectId: string;
+  project: {
+    id: string;
+    name: string;
+    client: string;
+    date: string;
+    status: 'draft' | 'active' | 'completed' | 'cancelled';
+    total: number;
+  } | null;
 }
 
-interface Project {
-  id: string;
-  name: string;
-  client: string;
-  date: string;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
-  total: number;
-}
-
-const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onProjectUpdated, projectId }) => {
+const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onProjectUpdated, project }) => {
   const [name, setName] = useState('');
   const [client, setClient] = useState('');
   const [status, setStatus] = useState<'draft' | 'active' | 'completed' | 'cancelled'>('draft');
   const [total, setTotal] = useState('');
 
   useEffect(() => {
-    if (open && projectId) {
-      const project = getById<Project>(StorageKeys.PROJECTS, projectId);
-      if (project) {
-        setName(project.name);
-        setClient(project.client);
-        setStatus(project.status);
-        setTotal(project.total.toString());
-      }
+    if (open && project) {
+      setName(project.name);
+      setClient(project.client);
+      setStatus(project.status);
+      setTotal(project.total.toString());
     }
-  }, [open, projectId]);
+  }, [open, project]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !client) {
+    if (!project || !name || !client) {
       toast.error('Numele proiectului și clientul sunt obligatorii');
       return;
     }
@@ -58,7 +53,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onPr
         total: parseFloat(total) || 0
       };
 
-      update(StorageKeys.PROJECTS, projectId, updatedProject);
+      update(StorageKeys.PROJECTS, project.id, updatedProject);
       
       toast.success('Proiectul a fost actualizat cu succes');
       
