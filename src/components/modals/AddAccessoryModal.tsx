@@ -17,12 +17,19 @@ interface AddAccessoryModalProps {
 interface AccessoryCategory {
   id: string;
   name: string;
+  subcategories: Subcategory[];
+}
+
+interface Subcategory {
+  id: string;
+  name: string;
 }
 
 interface Accessory {
   id: string;
   name: string;
   category: string;
+  subcategory?: string;
   price: number;
   stock: number;
 }
@@ -30,14 +37,45 @@ interface Accessory {
 const AddAccessoryModal: React.FC<AddAccessoryModalProps> = ({ open, onClose, onAccessoryAdded }) => {
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  const [subcategoryId, setSubcategoryId] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [categories, setCategories] = useState<AccessoryCategory[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
 
   useEffect(() => {
     const taxonomiesData = getTaxonomies();
     if (taxonomiesData && taxonomiesData.accessoryCategories) {
       setCategories(taxonomiesData.accessoryCategories);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    // Reset subcategory when category changes
+    setSubcategoryId('');
+    
+    // Load subcategories based on selected category
+    if (categoryId) {
+      const selectedCategory = categories.find(cat => cat.id === categoryId);
+      if (selectedCategory && selectedCategory.subcategories) {
+        setSubcategories(selectedCategory.subcategories);
+      } else {
+        setSubcategories([]);
+      }
+    } else {
+      setSubcategories([]);
+    }
+  }, [categoryId, categories]);
+
+  // Reset form when modal is closed
+  useEffect(() => {
+    if (!open) {
+      setName('');
+      setCategoryId('');
+      setSubcategoryId('');
+      setPrice('');
+      setStock('');
+      setSubcategories([]);
     }
   }, [open]);
 
@@ -47,7 +85,7 @@ const AddAccessoryModal: React.FC<AddAccessoryModalProps> = ({ open, onClose, on
     if (!name || !categoryId || !price) {
       toast({
         title: 'Eroare',
-        description: 'Toate câmpurile sunt obligatorii',
+        description: 'Numele, categoria și prețul sunt câmpuri obligatorii',
         variant: 'destructive'
       });
       return;
@@ -55,11 +93,13 @@ const AddAccessoryModal: React.FC<AddAccessoryModalProps> = ({ open, onClose, on
 
     try {
       const selectedCategory = categories.find(cat => cat.id === categoryId);
+      const selectedSubcategory = subcategories.find(subcat => subcat.id === subcategoryId);
       
       const newAccessory: Accessory = {
         id: `acc_${Date.now()}`,
         name: name.trim(),
         category: selectedCategory ? selectedCategory.name : '',
+        subcategory: selectedSubcategory ? selectedSubcategory.name : undefined,
         price: parseFloat(price),
         stock: parseInt(stock) || 0
       };
@@ -110,6 +150,26 @@ const AddAccessoryModal: React.FC<AddAccessoryModalProps> = ({ open, onClose, on
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="subcategory">Subcategorie</Label>
+            <Select 
+              value={subcategoryId} 
+              onValueChange={setSubcategoryId} 
+              disabled={subcategories.length === 0}
+            >
+              <SelectTrigger id="subcategory">
+                <SelectValue placeholder={subcategories.length === 0 ? "Nicio subcategorie disponibilă" : "Selectați subcategoria"} />
+              </SelectTrigger>
+              <SelectContent>
+                {subcategories.map((subcategory) => (
+                  <SelectItem key={subcategory.id} value={subcategory.id}>
+                    {subcategory.name}
                   </SelectItem>
                 ))}
               </SelectContent>

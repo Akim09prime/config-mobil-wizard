@@ -206,6 +206,4 @@ toast.info = (description: string) => {
   return toast({ description, variant: "info" });
 };
 
-// Removed the duplicate useToast function that was here
-
 export { useToast, toast };

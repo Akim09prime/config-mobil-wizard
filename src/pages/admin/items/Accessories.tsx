@@ -13,6 +13,7 @@ interface Accessory {
   id: string;
   name: string;
   category: string;
+  subcategory?: string;
   price: number;
   stock: number;
 }
@@ -116,6 +117,7 @@ const AccessoryItems: React.FC = () => {
               <TableRow>
                 <TableHead>Nume</TableHead>
                 <TableHead>Categorie</TableHead>
+                <TableHead>Subcategorie</TableHead>
                 <TableHead>Preț unitar</TableHead>
                 <TableHead>Stoc</TableHead>
                 <TableHead className="w-28">Acțiuni</TableHead>
@@ -124,7 +126,7 @@ const AccessoryItems: React.FC = () => {
             <TableBody>
               {accessories.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                     Nu există accesorii definite
                   </TableCell>
                 </TableRow>
@@ -133,6 +135,7 @@ const AccessoryItems: React.FC = () => {
                   <TableRow key={accessory.id}>
                     <TableCell className="font-medium">{accessory.name}</TableCell>
                     <TableCell>{accessory.category}</TableCell>
+                    <TableCell>{accessory.subcategory || <span className="text-muted-foreground italic">Nicio subcategorie</span>}</TableCell>
                     <TableCell>{accessory.price} RON</TableCell>
                     <TableCell>{accessory.stock} buc</TableCell>
                     <TableCell>
