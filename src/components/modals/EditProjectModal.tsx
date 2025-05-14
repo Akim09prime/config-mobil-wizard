@@ -5,8 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { StorageKeys, update } from '@/services/storage';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { StorageKeys, update, getAll } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
+import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
+import CabinetWrapper from '@/components/cabinet/CabinetWrapper';
+import { normalizeCabinet } from '@/utils/cabinetHelpers';
 
 interface EditProjectModalProps {
   open: boolean;
@@ -22,6 +26,7 @@ interface Project {
   date: string;
   status: 'draft' | 'active' | 'completed' | 'cancelled';
   total: number;
+  cabinets?: Cabinet[];
 }
 
 const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onProjectUpdated, project }) => {
@@ -29,6 +34,19 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onPr
   const [client, setClient] = useState('');
   const [status, setStatus] = useState<'draft' | 'active' | 'completed' | 'cancelled'>('draft');
   const [total, setTotal] = useState('');
+  const [cabinets, setCabinets] = useState<Cabinet[]>([]);
+  const [availableCabinets, setAvailableCabinets] = useState<Cabinet[]>([]);
+  const [showCabinetConfigurator, setShowCabinetConfigurator] = useState(false);
+  const [cabinetToEdit, setCabinetToEdit] = useState<Cabinet | null>(null);
+  const [showCabinetConfiguratorEdit, setShowCabinetConfiguratorEdit] = useState(false);
+
+  useEffect(() => {
+    // Load available cabinets when modal opens
+    if (open) {
+      const loadedCabinets = getAll<Cabinet>(StorageKeys.CABINETS);
+      setAvailableCabinets(loadedCabinets || []);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (project) {
@@ -36,6 +54,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onPr
       setClient(project.client);
       setStatus(project.status);
       setTotal(project.total.toString());
+      setCabinets(project.cabinets || []);
     }
   }, [project]);
 
@@ -52,13 +71,19 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onPr
     }
 
     try {
-      // Nu modificăm data proiectului la editare
+      // Calculate new total based on cabinets if needed
+      let projectTotal = parseFloat(total) || 0;
+      if (cabinets.length > 0) {
+        projectTotal = cabinets.reduce((sum, cab) => sum + (cab.price || 0), 0);
+      }
+
       const updatedProject: Project = {
         ...project,
         name: name.trim(),
         client: client.trim(),
         status: status,
-        total: parseFloat(total) || 0
+        total: projectTotal,
+        cabinets: cabinets
       };
 
       update(StorageKeys.PROJECTS, project.id, updatedProject);
@@ -80,13 +105,31 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onPr
     }
   };
 
+  const handleAddCabinet = (cabinet: Cabinet) => {
+    // Create a copy of the cabinet with a new ID to avoid referencing the original
+    const cabinetCopy = {
+      ...cabinet,
+      id: `cab_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+    };
+    setCabinets([...cabinets, cabinetCopy]);
+  };
+
+  const handleEditCabinet = (cabinet: Cabinet) => {
+    setCabinetToEdit(cabinet);
+    setShowCabinetConfiguratorEdit(true);
+  };
+
+  const handleDeleteCabinet = (cabinetId: string) => {
+    setCabinets(cabinets.filter(cabinet => cabinet.id !== cabinetId));
+  };
+
   if (!project) {
     return null;
   }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editare proiect</DialogTitle>
         </DialogHeader>
@@ -142,6 +185,76 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onPr
             />
           </div>
 
+          {/* Cabinets Section */}
+          <div className="border rounded-md p-4 space-y-4">
+            <h3 className="text-lg font-medium">Corpuri de mobilier</h3>
+            
+            <div className="flex gap-2">
+              {/* Button to add new custom cabinet */}
+              <Button 
+                type="button" 
+                onClick={() => setShowCabinetConfigurator(true)}
+                className="flex items-center gap-1"
+              >
+                <PlusIcon size={16} />
+                Corp Nou
+              </Button>
+              
+              {/* Dropdown to select from existing cabinets */}
+              <Select onValueChange={(value) => {
+                const selectedCabinet = availableCabinets.find(cab => cab.id === value);
+                if (selectedCabinet) handleAddCabinet(selectedCabinet);
+              }}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Adaugă corp existent" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCabinets.map(cabinet => (
+                    <SelectItem key={cabinet.id} value={cabinet.id}>{cabinet.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Display current cabinets */}
+            {cabinets.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                {cabinets.map(cabinet => (
+                  <Card key={cabinet.id} className="overflow-hidden">
+                    <CardHeader className="p-3">
+                      <CardTitle className="text-base">{cabinet.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-3 pt-0 text-sm">
+                      <p>Dimensiuni: {cabinet.width}x{cabinet.height}x{cabinet.depth} cm</p>
+                      <p className="font-semibold">Preț: {cabinet.price} RON</p>
+                    </CardContent>
+                    <CardFooter className="p-2 justify-end">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleEditCabinet(cabinet)}
+                        className="mr-2"
+                      >
+                        <PencilIcon size={16} />
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={() => handleDeleteCabinet(cabinet.id)}
+                      >
+                        <TrashIcon size={16} />
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-gray-500">
+                Nu există corpuri adăugate la acest proiect
+              </div>
+            )}
+          </div>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Anulează
@@ -152,6 +265,38 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onPr
           </DialogFooter>
         </form>
       </DialogContent>
+      
+      {/* Cabinet configurator for new cabinets */}
+      {showCabinetConfigurator && (
+        <CabinetWrapper
+          open={showCabinetConfigurator}
+          onClose={() => setShowCabinetConfigurator(false)}
+          onSave={(cabinet) => {
+            handleAddCabinet(normalizeCabinet(cabinet));
+            setShowCabinetConfigurator(false);
+          }}
+        />
+      )}
+      
+      {/* Cabinet configurator for editing cabinets */}
+      {showCabinetConfiguratorEdit && cabinetToEdit && (
+        <CabinetWrapper
+          open={showCabinetConfiguratorEdit}
+          onClose={() => {
+            setShowCabinetConfiguratorEdit(false);
+            setCabinetToEdit(null);
+          }}
+          onSave={(cabinet) => {
+            const updatedCabinets = cabinets.map(cab => 
+              cab.id === cabinetToEdit.id ? normalizeCabinet(cabinet) : cab
+            );
+            setCabinets(updatedCabinets);
+            setShowCabinetConfiguratorEdit(false);
+            setCabinetToEdit(null);
+          }}
+          initialCabinet={cabinetToEdit}
+        />
+      )}
     </Dialog>
   );
 };

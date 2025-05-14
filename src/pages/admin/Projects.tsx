@@ -11,6 +11,15 @@ import AddProjectModal from '@/components/modals/AddProjectModal';
 import EditProjectModal from '@/components/modals/EditProjectModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
+interface Cabinet {
+  id: string;
+  name: string;
+  width: number;
+  height: number;
+  depth: number;
+  price: number;
+}
+
 interface Project {
   id: string;
   name: string;
@@ -18,6 +27,7 @@ interface Project {
   date: string;
   status: 'draft' | 'active' | 'completed' | 'cancelled';
   total: number;
+  cabinets?: Cabinet[];
 }
 
 const Projects: React.FC = () => {
@@ -162,7 +172,14 @@ const Projects: React.FC = () => {
                     <TableCell>{project.client}</TableCell>
                     <TableCell>{project.date}</TableCell>
                     <TableCell>{getStatusBadge(project.status)}</TableCell>
-                    <TableCell>{project.total} RON</TableCell>
+                    <TableCell>
+                      {project.total} RON
+                      {project.cabinets && project.cabinets.length > 0 && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          ({project.cabinets.length} corpuri)
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button
