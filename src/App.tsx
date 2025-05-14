@@ -15,12 +15,14 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import TaxonomiesAccessories from "./pages/admin/TaxonomiesAccessories";
 import TaxonomiesMaterials from "./pages/admin/TaxonomiesMaterials";
 import TaxonomiesComponents from "./pages/admin/TaxonomiesComponents";
+import TaxonomiesCategories from "./pages/admin/TaxonomiesCategories";
 import CabinetItems from "./pages/admin/items/Cabinets";
 import MaterialItems from "./pages/admin/items/Materials";
 import AccessoryItems from "./pages/admin/items/Accessories";
 import ComponentItems from "./pages/admin/items/Components";
 import Projects from "./pages/admin/Projects";
 import Settings from "./pages/admin/Settings";
+import FurnitureCalculator from "./pages/calculator/FurnitureCalculator";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,7 @@ const App = () => (
                   <Route path="taxonomies/accessories" element={<TaxonomiesAccessories />} />
                   <Route path="taxonomies/materials" element={<TaxonomiesMaterials />} />
                   <Route path="taxonomies/components" element={<TaxonomiesComponents />} />
+                  <Route path="taxonomies/categories" element={<TaxonomiesCategories />} />
                   
                   {/* Items */}
                   <Route path="items/cabinets" element={<CabinetItems />} />
@@ -82,7 +85,7 @@ const App = () => (
           
           <Route path="/calculator" element={
             <ClientLayout>
-              <div className="p-6 bg-white rounded-lg shadow">Calculator Rapid</div>
+              <FurnitureCalculator />
             </ClientLayout>
           } />
           

@@ -18,7 +18,7 @@ import {
   TooltipTrigger,
 } from '../../components/ui/tooltip';
 import { Avatar, AvatarFallback } from '../../components/ui/avatar';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 // Import icons
 import {
@@ -32,6 +32,8 @@ import {
   FileText,
   LayoutGrid,
   ChevronDown,
+  Download,
+  Upload,
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -54,6 +56,86 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     navigate('/auth/login');
   };
 
+  const handleExportDatabase = () => {
+    try {
+      // Get all localStorage data
+      const data = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('cm_')) {
+          data[key] = JSON.parse(localStorage.getItem(key) || '{}');
+        }
+      }
+
+      // Create a downloadable file
+      const dataStr = JSON.stringify(data, null, 2);
+      const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = `configurator-mobila-backup-${new Date().toISOString().split('T')[0]}.json`;
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+      
+      toast({
+        title: 'Succes',
+        description: 'Baza de date a fost exportată cu succes',
+      });
+    } catch (error) {
+      console.error('Error exporting database:', error);
+      toast({
+        title: 'Eroare',
+        description: 'Nu s-a putut exporta baza de date',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleImportDatabase = () => {
+    // Create file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target?.result as string);
+          
+          // Restore data to localStorage
+          Object.keys(data).forEach(key => {
+            localStorage.setItem(key, JSON.stringify(data[key]));
+          });
+          
+          toast({
+            title: 'Succes',
+            description: 'Baza de date a fost importată cu succes. Reîmprospătați pagina pentru a vedea datele.',
+          });
+          
+          // Refresh the page after a short delay
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } catch (error) {
+          console.error('Error importing database:', error);
+          toast({
+            title: 'Eroare',
+            description: 'Fișierul selectat nu este valid',
+            variant: 'destructive',
+          });
+        }
+      };
+      reader.readAsText(file);
+    };
+    
+    input.click();
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -73,6 +155,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: <LayoutGrid size={20} />,
       path: '/admin/taxonomies',
       submenu: [
+        { title: 'Categorii', path: '/admin/taxonomies/categories' },
         { title: 'Accesorii', path: '/admin/taxonomies/accessories' },
         { title: 'Materiale', path: '/admin/taxonomies/materials' },
         { title: 'Componente', path: '/admin/taxonomies/components' },
@@ -176,6 +259,28 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               )}
             </React.Fragment>
           ))}
+
+          {/* Database Import/Export */}
+          {sidebarOpen && (
+            <div className="mt-6 pt-4 border-t border-sidebar-border">
+              <div className="space-y-2">
+                <button
+                  onClick={handleExportDatabase}
+                  className="flex w-full items-center px-3 py-2 rounded-md text-base font-medium hover:bg-sidebar-accent/20"
+                >
+                  <Download size={20} />
+                  <span className="ml-3">Export bază de date</span>
+                </button>
+                <button
+                  onClick={handleImportDatabase}
+                  className="flex w-full items-center px-3 py-2 rounded-md text-base font-medium hover:bg-sidebar-accent/20"
+                >
+                  <Upload size={20} />
+                  <span className="ml-3">Import bază de date</span>
+                </button>
+              </div>
+            </div>
+          )}
         </nav>
       </aside>
 
@@ -200,6 +305,36 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+
+            {!sidebarOpen && (
+              <>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button onClick={handleExportDatabase} className="p-2 rounded-md hover:bg-muted">
+                        <Download size={18} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Export bază de date</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button onClick={handleImportDatabase} className="p-2 rounded-md hover:bg-muted">
+                        <Upload size={18} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Import bază de date</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </>
+            )}
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
