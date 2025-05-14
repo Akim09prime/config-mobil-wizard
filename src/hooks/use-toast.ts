@@ -5,8 +5,8 @@ import type { ToasterToast } from "./toast-types"
 
 export type ToastProps = Omit<ToasterToast, "id">
 
-// Re-export with convenience functions
-export const toast = {
+// Define toast methods
+export const toastMethods = {
   // Base function to show toast
   // This allows both object style: toast({ title: "Hello", description: "World" })
   // and string style: toast("Hello World")
@@ -33,9 +33,12 @@ export const toast = {
   }
 }
 
-// Make the toast object also callable as a function
-export function toast(props: ToastProps | string) {
-  return toast.default(props)
-}
+// Create callable function that also has the methods attached
+export const toast = Object.assign(
+  function(props: ToastProps | string) {
+    return toastMethods.default(props)
+  },
+  toastMethods
+)
 
 export { useToast, ToastProvider }
