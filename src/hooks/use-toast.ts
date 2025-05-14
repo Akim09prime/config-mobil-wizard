@@ -32,7 +32,7 @@ const toastMethods = {
 }
 
 // Create callable function that also has methods
-export const toastActions = Object.assign(
+export const toast = Object.assign(
   (props: ToastProps | string) => toastMethods.default(props),
   toastMethods
 )
