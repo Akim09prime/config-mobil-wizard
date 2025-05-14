@@ -5,9 +5,9 @@
 interface Cabinet {
   id: string;
   name: string;
-  category: string;
-  subcategory: string;
-  dimensions: {
+  category?: string; // Made optional to match other definitions
+  subcategory?: string; // Made optional to match other definitions
+  dimensions?: {
     width: number;
     height: number;
     depth: number;
@@ -16,7 +16,7 @@ interface Cabinet {
   height: number;
   depth: number;
   price: number;
-  image: string | null;
+  image?: string | null;
   pieces?: {
     id: string;
     name: string;

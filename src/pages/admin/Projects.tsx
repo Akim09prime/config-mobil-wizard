@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,19 +10,7 @@ import AddProjectModal from '@/components/modals/AddProjectModal';
 import EditProjectModal from '@/components/modals/EditProjectModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
-interface Cabinet {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  depth: number;
-  price: number;
-  category?: string;
-  subcategory?: string;
-  dimensions?: { width: number; height: number; depth: number };
-  image?: string | null;
-}
-
+// Using the global Cabinet interface defined in vite-env.d.ts
 interface Project {
   id: string;
   name: string;
@@ -31,7 +18,7 @@ interface Project {
   date: string;
   status: 'draft' | 'active' | 'completed' | 'cancelled';
   total: number;
-  cabinets?: Cabinet[];
+  cabinets?: Cabinet[]; // Using the global Cabinet interface
 }
 
 const Projects: React.FC = () => {

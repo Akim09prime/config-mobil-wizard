@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import CabinetWrapper from '@/components/cabinet/CabinetWrapper';
 import { getFurniturePresets } from '@/services/storage';
 import { generateQuotePDF } from '@/services/pdf';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast'; // Import toast directly instead of useToast
 import {
   calculateProjectMaterialTotal,
   calculateProjectAccessoryTotal,
@@ -42,7 +41,7 @@ interface Project {
 
 const NewProject: React.FC = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  // Remove the destructuring of toast from useToast
 
   const [currentStep, setCurrentStep] = useState(1);
   const [presets, setPresets] = useState<Cabinet[]>([]);
@@ -90,6 +89,7 @@ const NewProject: React.FC = () => {
   };
 
   const handleSaveProject = () => {
+    // Use the imported toast directly
     toast({ title: "Proiect salvat", description: "Proiectul a fost salvat cu succes!" });
     navigate('/admin/projects');
   };
@@ -121,8 +121,10 @@ const NewProject: React.FC = () => {
   const handleGeneratePDF = async () => {
     try {
       const path = await generateQuotePDF(project);
+      // Use the imported toast directly
       toast({ title: "PDF generat", description: `PDF-ul a fost generat: ${path}` });
     } catch {
+      // Use the imported toast directly with variant
       toast({ title: "Eroare", description: "Eroare la generarea PDF-ului.", variant: "destructive" });
     }
   };
@@ -130,6 +132,7 @@ const NewProject: React.FC = () => {
   const handleCloneProject = () => {
     const clone = { ...project, id: `proj_${Date.now()}`, name: `${project.name} (copie)`, createdAt: new Date() };
     setProject(clone);
+    // Use the imported toast directly
     toast({ title: "Proiect clonat", description: "O copie a proiectului a fost creată." });
   };
 
