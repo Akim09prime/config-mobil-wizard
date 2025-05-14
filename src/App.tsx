@@ -11,6 +11,16 @@ import Register from "./pages/auth/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 import ClientLayout from "./components/layout/ClientLayout";
+import AdminDashboard from "./pages/admin/Dashboard";
+import TaxonomiesAccessories from "./pages/admin/TaxonomiesAccessories";
+import TaxonomiesMaterials from "./pages/admin/TaxonomiesMaterials";
+import TaxonomiesComponents from "./pages/admin/TaxonomiesComponents";
+import CabinetItems from "./pages/admin/items/Cabinets";
+import MaterialItems from "./pages/admin/items/Materials";
+import AccessoryItems from "./pages/admin/items/Accessories";
+import ComponentItems from "./pages/admin/items/Components";
+import Projects from "./pages/admin/Projects";
+import Settings from "./pages/admin/Settings";
 
 const queryClient = new QueryClient();
 
@@ -32,8 +42,24 @@ const App = () => (
             <ProtectedRoute allowedRoles={["administrator"]}>
               <AdminLayout>
                 <Routes>
-                  <Route path="dashboard" element={<div className="p-6 bg-white rounded-lg shadow">Dashboard Administrator</div>} />
-                  {/* Add other admin routes as needed */}
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  
+                  {/* Taxonomies */}
+                  <Route path="taxonomies/accessories" element={<TaxonomiesAccessories />} />
+                  <Route path="taxonomies/materials" element={<TaxonomiesMaterials />} />
+                  <Route path="taxonomies/components" element={<TaxonomiesComponents />} />
+                  
+                  {/* Items */}
+                  <Route path="items/cabinets" element={<CabinetItems />} />
+                  <Route path="items/materials" element={<MaterialItems />} />
+                  <Route path="items/accessories" element={<AccessoryItems />} />
+                  <Route path="items/components" element={<ComponentItems />} />
+                  
+                  {/* Projects */}
+                  <Route path="projects" element={<Projects />} />
+                  
+                  {/* Settings */}
+                  <Route path="settings" element={<Settings />} />
                 </Routes>
               </AdminLayout>
             </ProtectedRoute>
