@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { StorageKeys, getAll } from '@/services/storage';
+import { StorageKeys, getAll, remove } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
 import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
+import AddAccessoryModal from '@/components/modals/AddAccessoryModal';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Accessory {
   id: string;
@@ -18,33 +20,31 @@ interface Accessory {
 const AccessoryItems: React.FC = () => {
   const [accessories, setAccessories] = useState<Accessory[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [accessoryToDelete, setAccessoryToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadAccessories = async () => {
-      try {
-        const accessoriesData = getAll<Accessory>(StorageKeys.ACCESSORIES);
-        setAccessories(accessoriesData);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error loading accessories:', error);
-        toast({
-          title: 'Eroare',
-          description: 'Nu s-au putut încărca accesoriile',
-          variant: 'destructive'
-        });
-        setLoading(false);
-      }
-    };
-
     loadAccessories();
   }, []);
 
+  const loadAccessories = () => {
+    try {
+      const accessoriesData = getAll<Accessory>(StorageKeys.ACCESSORIES);
+      setAccessories(accessoriesData);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading accessories:', error);
+      toast({
+        title: 'Eroare',
+        description: 'Nu s-au putut încărca accesoriile',
+        variant: 'destructive'
+      });
+      setLoading(false);
+    }
+  };
+
   const handleAddAccessory = () => {
-    // În versiunea completă, aici ar trebui să deschideți un modal pentru adăugare
-    toast({
-      title: 'Notă',
-      description: 'Funcționalitatea de adăugare va fi implementată în versiunea următoare'
-    });
+    setIsAddModalOpen(true);
   };
 
   const handleEditAccessory = (id: string) => {
@@ -56,11 +56,36 @@ const AccessoryItems: React.FC = () => {
   };
 
   const handleDeleteAccessory = (id: string) => {
-    // În versiunea completă, aici ar trebui să confirmați și apoi să ștergeți
-    toast({
-      title: 'Notă',
-      description: 'Funcționalitatea de ștergere va fi implementată în versiunea următoare'
-    });
+    setAccessoryToDelete(id);
+  };
+
+  const confirmDelete = () => {
+    if (accessoryToDelete) {
+      try {
+        const success = remove(StorageKeys.ACCESSORIES, accessoryToDelete);
+        if (success) {
+          toast({
+            title: 'Succes',
+            description: 'Accesoriul a fost șters cu succes'
+          });
+          loadAccessories();
+        } else {
+          toast({
+            title: 'Eroare',
+            description: 'Nu s-a putut șterge accesoriul',
+            variant: 'destructive'
+          });
+        }
+      } catch (error) {
+        console.error('Error deleting accessory:', error);
+        toast({
+          title: 'Eroare',
+          description: 'Nu s-a putut șterge accesoriul',
+          variant: 'destructive'
+        });
+      }
+      setAccessoryToDelete(null);
+    }
   };
 
   if (loading) {
@@ -135,6 +160,29 @@ const AccessoryItems: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <AddAccessoryModal 
+        open={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onAccessoryAdded={loadAccessories}
+      />
+
+      <AlertDialog open={accessoryToDelete !== null} onOpenChange={() => setAccessoryToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmare ștergere</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sunteți sigur că doriți să ștergeți acest accesoriu? Această acțiune nu poate fi anulată.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anulare</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+              Șterge
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

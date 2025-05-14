@@ -1,12 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { StorageKeys, getAll } from '@/services/storage';
+import { StorageKeys, getAll, remove } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
-import { PlusIcon, TrashIcon, PencilIcon, FileIcon } from 'lucide-react';
+import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import AddProjectModal from '@/components/modals/AddProjectModal';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Project {
   id: string;
@@ -20,33 +22,31 @@ interface Project {
 const Projects: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const projectsData = getAll<Project>(StorageKeys.PROJECTS);
-        setProjects(projectsData || []);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error loading projects:', error);
-        toast({
-          title: 'Eroare',
-          description: 'Nu s-au putut încărca proiectele',
-          variant: 'destructive'
-        });
-        setLoading(false);
-      }
-    };
-
     loadProjects();
   }, []);
 
+  const loadProjects = () => {
+    try {
+      const projectsData = getAll<Project>(StorageKeys.PROJECTS);
+      setProjects(projectsData || []);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading projects:', error);
+      toast({
+        title: 'Eroare',
+        description: 'Nu s-au putut încărca proiectele',
+        variant: 'destructive'
+      });
+      setLoading(false);
+    }
+  };
+
   const handleAddProject = () => {
-    // În versiunea completă, aici ar trebui să deschideți un modal pentru adăugare
-    toast({
-      title: 'Notă',
-      description: 'Funcționalitatea de adăugare va fi implementată în versiunea următoare'
-    });
+    setIsAddModalOpen(true);
   };
 
   const handleEditProject = (id: string) => {
@@ -58,11 +58,36 @@ const Projects: React.FC = () => {
   };
 
   const handleDeleteProject = (id: string) => {
-    // În versiunea completă, aici ar trebui să confirmați și apoi să ștergeți
-    toast({
-      title: 'Notă',
-      description: 'Funcționalitatea de ștergere va fi implementată în versiunea următoare'
-    });
+    setProjectToDelete(id);
+  };
+
+  const confirmDelete = () => {
+    if (projectToDelete) {
+      try {
+        const success = remove(StorageKeys.PROJECTS, projectToDelete);
+        if (success) {
+          toast({
+            title: 'Succes',
+            description: 'Proiectul a fost șters cu succes'
+          });
+          loadProjects();
+        } else {
+          toast({
+            title: 'Eroare',
+            description: 'Nu s-a putut șterge proiectul',
+            variant: 'destructive'
+          });
+        }
+      } catch (error) {
+        console.error('Error deleting project:', error);
+        toast({
+          title: 'Eroare',
+          description: 'Nu s-a putut șterge proiectul',
+          variant: 'destructive'
+        });
+      }
+      setProjectToDelete(null);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -154,6 +179,29 @@ const Projects: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <AddProjectModal 
+        open={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onProjectAdded={loadProjects}
+      />
+
+      <AlertDialog open={projectToDelete !== null} onOpenChange={() => setProjectToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmare ștergere</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sunteți sigur că doriți să ștergeți acest proiect? Această acțiune nu poate fi anulată.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anulare</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+              Șterge
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

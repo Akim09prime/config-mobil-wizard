@@ -1,11 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { StorageKeys, getAll } from '@/services/storage';
+import { StorageKeys, getAll, remove } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
 import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
+import AddMaterialModal from '@/components/modals/AddMaterialModal';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Material {
   id: string;
@@ -22,33 +24,31 @@ interface Material {
 const MaterialItems: React.FC = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [materialToDelete, setMaterialToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadMaterials = async () => {
-      try {
-        const materialsData = getAll<Material>(StorageKeys.MATERIALS);
-        setMaterials(materialsData);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error loading materials:', error);
-        toast({
-          title: 'Eroare',
-          description: 'Nu s-au putut încărca materialele',
-          variant: 'destructive'
-        });
-        setLoading(false);
-      }
-    };
-
     loadMaterials();
   }, []);
 
+  const loadMaterials = () => {
+    try {
+      const materialsData = getAll<Material>(StorageKeys.MATERIALS);
+      setMaterials(materialsData);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading materials:', error);
+      toast({
+        title: 'Eroare',
+        description: 'Nu s-au putut încărca materialele',
+        variant: 'destructive'
+      });
+      setLoading(false);
+    }
+  };
+
   const handleAddMaterial = () => {
-    // În versiunea completă, aici ar trebui să deschideți un modal pentru adăugare
-    toast({
-      title: 'Notă',
-      description: 'Funcționalitatea de adăugare va fi implementată în versiunea următoare'
-    });
+    setIsAddModalOpen(true);
   };
 
   const handleEditMaterial = (id: string) => {
@@ -60,11 +60,36 @@ const MaterialItems: React.FC = () => {
   };
 
   const handleDeleteMaterial = (id: string) => {
-    // În versiunea completă, aici ar trebui să confirmați și apoi să ștergeți
-    toast({
-      title: 'Notă',
-      description: 'Funcționalitatea de ștergere va fi implementată în versiunea următoare'
-    });
+    setMaterialToDelete(id);
+  };
+
+  const confirmDelete = () => {
+    if (materialToDelete) {
+      try {
+        const success = remove(StorageKeys.MATERIALS, materialToDelete);
+        if (success) {
+          toast({
+            title: 'Succes',
+            description: 'Materialul a fost șters cu succes'
+          });
+          loadMaterials();
+        } else {
+          toast({
+            title: 'Eroare',
+            description: 'Nu s-a putut șterge materialul',
+            variant: 'destructive'
+          });
+        }
+      } catch (error) {
+        console.error('Error deleting material:', error);
+        toast({
+          title: 'Eroare',
+          description: 'Nu s-a putut șterge materialul',
+          variant: 'destructive'
+        });
+      }
+      setMaterialToDelete(null);
+    }
   };
 
   if (loading) {
@@ -141,6 +166,29 @@ const MaterialItems: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <AddMaterialModal 
+        open={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onMaterialAdded={loadMaterials}
+      />
+
+      <AlertDialog open={materialToDelete !== null} onOpenChange={() => setMaterialToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmare ștergere</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sunteți sigur că doriți să ștergeți acest material? Această acțiune nu poate fi anulată.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anulare</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+              Șterge
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
