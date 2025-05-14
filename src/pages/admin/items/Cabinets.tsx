@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,30 +5,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { StorageKeys, getAll, save, update, remove } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
 import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { normalizeCabinet } from '@/utils/cabinetHelpers';
 
-// Updated the Cabinet interface to be compatible with the one in CabinetConfigurator
-export interface Cabinet {
-  id: string;
-  name: string;
-  category: string;
-  subcategory: string;
-  dimensions: {
-    width: number;
-    height: number;
-    depth: number;
-  };
-  price: number;
-  image: string | null;
-  // Adding these properties to match the expected type in NewProject.tsx
-  width?: number;
-  height?: number;
-  depth?: number;
-}
+// Cabinet interface is now defined in vite-env.d.ts globally
 
 const CabinetItems: React.FC = () => {
   const [cabinets, setCabinets] = useState<Cabinet[]>([]);
@@ -42,6 +24,9 @@ const CabinetItems: React.FC = () => {
     category: '',
     subcategory: '',
     dimensions: { width: 0, height: 0, depth: 0 },
+    width: 0,
+    height: 0,
+    depth: 0,
     price: 0,
     image: null
   });
@@ -54,7 +39,7 @@ const CabinetItems: React.FC = () => {
   const loadCabinets = () => {
     try {
       const cabinetsData = getAll<Cabinet>(StorageKeys.CABINETS) || [];
-      // Update cabinets to include width, height and depth from dimensions
+      // Ensure all cabinets have width, height and depth at top level
       const updatedCabinets = cabinetsData.map(cabinet => ({
         ...cabinet,
         width: cabinet.dimensions.width,
@@ -183,23 +168,11 @@ const CabinetItems: React.FC = () => {
     }
 
     try {
-      const cabinetToSave: Cabinet = {
+      // Use our normalization helper to ensure cabinet has all required properties
+      const cabinetToSave = normalizeCabinet({
         ...newCabinet,
         id: `cab_${Date.now()}`,
-        dimensions: {
-          width: newCabinet.dimensions?.width || 0,
-          height: newCabinet.dimensions?.height || 0,
-          depth: newCabinet.dimensions?.depth || 0
-        },
-        width: newCabinet.dimensions?.width || 0,
-        height: newCabinet.dimensions?.height || 0,
-        depth: newCabinet.dimensions?.depth || 0,
-        image: newCabinet.image || null,
-        price: newCabinet.price || 0,
-        name: newCabinet.name || '',
-        category: newCabinet.category || '',
-        subcategory: newCabinet.subcategory || ''
-      };
+      });
 
       save(StorageKeys.CABINETS, cabinetToSave);
       toast({
@@ -229,13 +202,8 @@ const CabinetItems: React.FC = () => {
     }
 
     try {
-      // Make sure the cabinet has the width, height, and depth properties set
-      const updatedCabinet: Cabinet = {
-        ...editingCabinet,
-        width: editingCabinet.dimensions.width,
-        height: editingCabinet.dimensions.height,
-        depth: editingCabinet.dimensions.depth
-      };
+      // Use our normalization helper to ensure cabinet has all required properties
+      const updatedCabinet = normalizeCabinet(editingCabinet);
 
       update(StorageKeys.CABINETS, updatedCabinet.id, updatedCabinet);
       toast({
