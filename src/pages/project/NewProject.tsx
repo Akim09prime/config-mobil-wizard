@@ -144,15 +144,18 @@ const NewProject: React.FC = () => {
     }));
   };
 
-  const handleConfigurePreset = (preset: Cabinet) => {
-    // Normalize the preset to ensure it has all required properties
-    const normalizedCabinet = normalizeCabinet({
-      ...preset,
-      id: `cab_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-    });
-    setCabinetToEdit(normalizedCabinet);
+   const handleConfigurePreset = (preset: Cabinet) => {
+ const handleConfigurePreset = (preset: Cabinet) => {
+     // Normalize the preset to ensure it has all required properties
+     const normalizedCabinet = normalizeCabinet({
+       ...preset,
+       id: `cab_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+     });
+     setCabinetToEdit(normalizedCabinet);
+   setShowCabinetConfigurator(true);
     setShowCabinetConfiguratorEdit(true);
-  };
+   };
+
 
   const handleGeneratePDF = async () => {
     try {
