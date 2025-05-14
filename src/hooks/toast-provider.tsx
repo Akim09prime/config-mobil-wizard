@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { ToastContext } from "./toast-context"
 import { actionTypes, initialState, type ToasterToast } from "./toast-types"
 import { createUseReducerWithDispatch, toastReducer } from "./toast-reducer"
+import { registerToastHandler } from "./toast-provider-helper"
 
 let count = 0
 
@@ -22,18 +23,6 @@ export function useToast() {
   }
   
   return context
-}
-
-export function toast(props: Omit<ToasterToast, "id"> | string) {
-  // Get the toast context (which will throw if outside a ToastProvider)
-  const { addToast } = useToast()
-  
-  // Convert string to proper toast object if necessary
-  const toastProps = typeof props === 'string' 
-    ? { description: props } 
-    : props
-    
-  return addToast(toastProps)
 }
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -100,6 +89,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }),
     [state, addToast, updateToast, dismissToast, removeToast]
   )
+
+  // Register the toast handler on mount
+  React.useEffect(() => {
+    const unregister = registerToastHandler(addToast);
+    return () => {
+      unregister();
+    };
+  }, [addToast]);
 
   if (firstRender) {
     return null

@@ -1,9 +1,8 @@
 
 import * as React from "react"
-import { toast as showToast, useToast, ToastProvider } from "./toast-provider"
-import type { ToasterToast } from "./toast-types"
-
-export type ToastProps = Omit<ToasterToast, "id">
+import { toast as showToast } from "./toast-provider-helper"
+import { useToast } from "./toast-provider"
+import type { ToastProps } from "./toast-types"
 
 // Create a toast object with methods
 const toastMethods = {
@@ -38,4 +37,5 @@ export const toast = Object.assign(
 )
 
 // Export the hook and provider
-export { useToast, ToastProvider }
+export { useToast }
+export { ToastProvider } from "./toast-provider"
