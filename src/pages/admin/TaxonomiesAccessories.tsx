@@ -6,10 +6,17 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StorageKeys, getTaxonomies, updateTaxonomies } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusIcon, TrashIcon } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { PlusIcon, TrashIcon, FolderPlus } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 interface AccessoryCategory {
+  id: string;
+  name: string;
+  subcategories: Subcategory[];
+}
+
+interface Subcategory {
   id: string;
   name: string;
 }
@@ -18,13 +25,27 @@ const TaxonomiesAccessories: React.FC = () => {
   const [categories, setCategories] = useState<AccessoryCategory[]>([]);
   const [newCategory, setNewCategory] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [newSubcategory, setNewSubcategory] = useState<string>('');
+  const [showSubcategoryDialog, setShowSubcategoryDialog] = useState<boolean>(false);
+  const [editingCategory, setEditingCategory] = useState<AccessoryCategory | null>(null);
 
   useEffect(() => {
     const loadTaxonomies = async () => {
       try {
         const taxonomiesData = getTaxonomies();
         if (taxonomiesData && taxonomiesData.accessoryCategories) {
-          setCategories(taxonomiesData.accessoryCategories);
+          // Convert old format to new format with subcategories if needed
+          const updatedCategories = taxonomiesData.accessoryCategories.map((category: any) => {
+            if (!category.subcategories) {
+              return {
+                ...category,
+                subcategories: []
+              };
+            }
+            return category;
+          });
+          setCategories(updatedCategories);
         }
         setLoading(false);
       } catch (error) {
@@ -53,7 +74,8 @@ const TaxonomiesAccessories: React.FC = () => {
 
     const newCategoryObj = {
       id: `acc_${Date.now()}`,
-      name: newCategory.trim()
+      name: newCategory.trim(),
+      subcategories: []
     };
 
     const updatedCategories = [...categories, newCategoryObj];
@@ -81,6 +103,70 @@ const TaxonomiesAccessories: React.FC = () => {
     }
   };
 
+  const openSubcategoryDialog = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setNewSubcategory('');
+    setShowSubcategoryDialog(true);
+    
+    // Find the category to set for context
+    const category = categories.find(cat => cat.id === categoryId);
+    if (category) {
+      setEditingCategory(category);
+    }
+  };
+
+  const handleAddSubcategory = () => {
+    if (!newSubcategory.trim() || !selectedCategory) {
+      toast({
+        title: 'Eroare',
+        description: 'Introduceți un nume pentru subcategorie',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const updatedCategories = categories.map(category => {
+      if (category.id === selectedCategory) {
+        return {
+          ...category,
+          subcategories: [
+            ...category.subcategories || [],
+            {
+              id: `subcat_${Date.now()}`,
+              name: newSubcategory.trim()
+            }
+          ]
+        };
+      }
+      return category;
+    });
+
+    setCategories(updatedCategories);
+
+    try {
+      const taxonomies = getTaxonomies();
+      const updatedTaxonomies = {
+        ...taxonomies,
+        accessoryCategories: updatedCategories
+      };
+      updateTaxonomies(updatedTaxonomies);
+      toast({
+        title: 'Succes',
+        description: 'Subcategorie adăugată cu succes'
+      });
+      setShowSubcategoryDialog(false);
+      setNewSubcategory('');
+      setEditingCategory(null);
+    } catch (error) {
+      console.error('Error saving subcategory:', error);
+      toast({
+        title: 'Eroare',
+        description: 'Nu s-a putut salva subcategoria',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleDeleteCategory = (id: string) => {
     const updatedCategories = categories.filter(category => category.id !== id);
     setCategories(updatedCategories);
@@ -97,10 +183,46 @@ const TaxonomiesAccessories: React.FC = () => {
         description: 'Categorie ștearsă cu succes'
       });
     } catch (error) {
-      console.error('Error deleting accessory category:', error);
+      console.error('Error deleting category:', error);
       toast({
         title: 'Eroare',
         description: 'Nu s-a putut șterge categoria',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleDeleteSubcategory = (categoryId: string, subcategoryId: string) => {
+    const updatedCategories = categories.map(category => {
+      if (category.id === categoryId) {
+        return {
+          ...category,
+          subcategories: category.subcategories.filter(
+            subcategory => subcategory.id !== subcategoryId
+          )
+        };
+      }
+      return category;
+    });
+
+    setCategories(updatedCategories);
+
+    try {
+      const taxonomies = getTaxonomies();
+      const updatedTaxonomies = {
+        ...taxonomies,
+        accessoryCategories: updatedCategories
+      };
+      updateTaxonomies(updatedTaxonomies);
+      toast({
+        title: 'Succes',
+        description: 'Subcategorie ștearsă cu succes'
+      });
+    } catch (error) {
+      console.error('Error deleting subcategory:', error);
+      toast({
+        title: 'Eroare',
+        description: 'Nu s-a putut șterge subcategoria',
         variant: 'destructive'
       });
     }
@@ -144,13 +266,14 @@ const TaxonomiesAccessories: React.FC = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nume Categorie</TableHead>
-                  <TableHead className="w-24">Acțiuni</TableHead>
+                  <TableHead>Subcategorii</TableHead>
+                  <TableHead className="w-[180px]">Acțiuni</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {categories.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={2} className="text-center py-6 text-muted-foreground">
+                    <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
                       Nu există categorii definite
                     </TableCell>
                   </TableRow>
@@ -159,13 +282,44 @@ const TaxonomiesAccessories: React.FC = () => {
                     <TableRow key={category.id}>
                       <TableCell>{category.name}</TableCell>
                       <TableCell>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteCategory(category.id)}
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
+                        <div className="flex flex-wrap gap-1">
+                          {category.subcategories && category.subcategories.length === 0 ? (
+                            <span className="text-muted-foreground italic">
+                              Nicio subcategorie
+                            </span>
+                          ) : (
+                            category.subcategories && category.subcategories.map((subcategory) => (
+                              <div key={subcategory.id} className="flex items-center bg-muted rounded-md px-2 py-1">
+                                <span className="mr-1">{subcategory.name}</span>
+                                <button
+                                  onClick={() => handleDeleteSubcategory(category.id, subcategory.id)}
+                                  className="text-muted-foreground hover:text-destructive"
+                                >
+                                  <TrashIcon className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openSubcategoryDialog(category.id)}
+                          >
+                            <FolderPlus className="h-4 w-4 mr-1" />
+                            Adaugă Subcategorie
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteCategory(category.id)}
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -175,6 +329,38 @@ const TaxonomiesAccessories: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={showSubcategoryDialog} onOpenChange={setShowSubcategoryDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adaugă Subcategorie</DialogTitle>
+            <DialogDescription>
+              {editingCategory && (
+                <>Adăugați o nouă subcategorie la categoria <strong>{editingCategory.name}</strong>.</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="subcategory-name">Nume Subcategorie</Label>
+                <Input
+                  id="subcategory-name"
+                  placeholder="Introduceți numele subcategoriei"
+                  value={newSubcategory}
+                  onChange={(e) => setNewSubcategory(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSubcategoryDialog(false)}>
+              Anulează
+            </Button>
+            <Button onClick={handleAddSubcategory}>Adaugă</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
