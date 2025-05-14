@@ -151,7 +151,7 @@ const NewProject: React.FC = () => {
       id: `cab_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
     });
     setCabinetToEdit(normalizedCabinet);
-    setShowCabinetConfigurator(true);
+    setShowCabinetConfiguratorEdit(true);
   };
 
   const handleGeneratePDF = async () => {
