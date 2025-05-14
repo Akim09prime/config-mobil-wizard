@@ -28,6 +28,7 @@ const TaxonomiesCategories: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [newSubcategory, setNewSubcategory] = useState<string>('');
   const [showSubcategoryDialog, setShowSubcategoryDialog] = useState<boolean>(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   useEffect(() => {
     const loadTaxonomies = async () => {
@@ -39,11 +40,7 @@ const TaxonomiesCategories: React.FC = () => {
         setLoading(false);
       } catch (error) {
         console.error('Error loading categories:', error);
-        toast({
-          title: 'Eroare',
-          description: 'Nu s-au putut încărca categoriile',
-          variant: 'destructive'
-        });
+        toast.error('Nu s-au putut încărca categoriile');
         setLoading(false);
       }
     };
@@ -53,11 +50,7 @@ const TaxonomiesCategories: React.FC = () => {
 
   const handleAddCategory = () => {
     if (!newCategory.trim()) {
-      toast({
-        title: 'Eroare',
-        description: 'Introduceți un nume pentru categorie',
-        variant: 'destructive'
-      });
+      toast.error('Introduceți un nume pentru categorie');
       return;
     }
 
@@ -77,18 +70,11 @@ const TaxonomiesCategories: React.FC = () => {
         categories: updatedCategories
       };
       updateTaxonomies(updatedTaxonomies);
-      toast({
-        title: 'Succes',
-        description: 'Categorie adăugată cu succes'
-      });
+      toast.success('Categorie adăugată cu succes');
       setNewCategory('');
     } catch (error) {
       console.error('Error saving category:', error);
-      toast({
-        title: 'Eroare',
-        description: 'Nu s-a putut salva categoria',
-        variant: 'destructive'
-      });
+      toast.error('Nu s-a putut salva categoria');
     }
   };
 
@@ -96,15 +82,17 @@ const TaxonomiesCategories: React.FC = () => {
     setSelectedCategory(categoryId);
     setNewSubcategory('');
     setShowSubcategoryDialog(true);
+    
+    // Find the category to set for context
+    const category = categories.find(cat => cat.id === categoryId);
+    if (category) {
+      setEditingCategory(category);
+    }
   };
 
   const handleAddSubcategory = () => {
     if (!newSubcategory.trim() || !selectedCategory) {
-      toast({
-        title: 'Eroare',
-        description: 'Introduceți un nume pentru subcategorie',
-        variant: 'destructive'
-      });
+      toast.error('Introduceți un nume pentru subcategorie');
       return;
     }
 
@@ -133,19 +121,13 @@ const TaxonomiesCategories: React.FC = () => {
         categories: updatedCategories
       };
       updateTaxonomies(updatedTaxonomies);
-      toast({
-        title: 'Succes',
-        description: 'Subcategorie adăugată cu succes'
-      });
+      toast.success('Subcategorie adăugată cu succes');
       setShowSubcategoryDialog(false);
       setNewSubcategory('');
+      setEditingCategory(null);
     } catch (error) {
       console.error('Error saving subcategory:', error);
-      toast({
-        title: 'Eroare',
-        description: 'Nu s-a putut salva subcategoria',
-        variant: 'destructive'
-      });
+      toast.error('Nu s-a putut salva subcategoria');
     }
   };
 
@@ -160,17 +142,10 @@ const TaxonomiesCategories: React.FC = () => {
         categories: updatedCategories
       };
       updateTaxonomies(updatedTaxonomies);
-      toast({
-        title: 'Succes',
-        description: 'Categorie ștearsă cu succes'
-      });
+      toast.success('Categorie ștearsă cu succes');
     } catch (error) {
       console.error('Error deleting category:', error);
-      toast({
-        title: 'Eroare',
-        description: 'Nu s-a putut șterge categoria',
-        variant: 'destructive'
-      });
+      toast.error('Nu s-a putut șterge categoria');
     }
   };
 
@@ -196,17 +171,10 @@ const TaxonomiesCategories: React.FC = () => {
         categories: updatedCategories
       };
       updateTaxonomies(updatedTaxonomies);
-      toast({
-        title: 'Succes',
-        description: 'Subcategorie ștearsă cu succes'
-      });
+      toast.success('Subcategorie ștearsă cu succes');
     } catch (error) {
       console.error('Error deleting subcategory:', error);
-      toast({
-        title: 'Eroare',
-        description: 'Nu s-a putut șterge subcategoria',
-        variant: 'destructive'
-      });
+      toast.error('Nu s-a putut șterge subcategoria');
     }
   };
 
@@ -265,17 +233,23 @@ const TaxonomiesCategories: React.FC = () => {
                       <TableCell>{category.name}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
-                          {category.subcategories.map((subcategory) => (
-                            <div key={subcategory.id} className="flex items-center bg-muted rounded-md px-2 py-1">
-                              <span className="mr-1">{subcategory.name}</span>
-                              <button
-                                onClick={() => handleDeleteSubcategory(category.id, subcategory.id)}
-                                className="text-muted-foreground hover:text-destructive"
-                              >
-                                <TrashIcon className="h-3 w-3" />
-                              </button>
-                            </div>
-                          ))}
+                          {category.subcategories.length === 0 ? (
+                            <span className="text-muted-foreground italic">
+                              Nicio subcategorie
+                            </span>
+                          ) : (
+                            category.subcategories.map((subcategory) => (
+                              <div key={subcategory.id} className="flex items-center bg-muted rounded-md px-2 py-1">
+                                <span className="mr-1">{subcategory.name}</span>
+                                <button
+                                  onClick={() => handleDeleteSubcategory(category.id, subcategory.id)}
+                                  className="text-muted-foreground hover:text-destructive"
+                                >
+                                  <TrashIcon className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -311,7 +285,9 @@ const TaxonomiesCategories: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Adaugă Subcategorie</DialogTitle>
             <DialogDescription>
-              Adăugați o nouă subcategorie la categoria selectată.
+              {editingCategory && (
+                <>Adăugați o nouă subcategorie la categoria <strong>{editingCategory.name}</strong>.</>
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
