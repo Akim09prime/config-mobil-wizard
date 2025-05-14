@@ -1,7 +1,6 @@
 
 // Update the file to ensure type compatibility with Cabinet interface
 // This file had errors related to the Cabinet type not having materials/accessories properties
-// We'll ensure the interface matches what's used in the component
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,16 +15,20 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Badge } from '@/components/ui/badge';
 import { SearchIcon, XIcon } from 'lucide-react';
 
-// Extended Cabinet interface to include materials and accessories
-interface ExtendedCabinet extends Cabinet {
-  materials?: {
-    id: string;
-    name: string;
-    price: number;
-  }[];
+// Extended Cabinet interface with all needed properties
+interface ExtendedCabinet extends Omit<Cabinet, 'accessories' | 'materials'> {
+  zone?: string;
+  description?: string;
   accessories?: {
     id: string;
     name: string;
+    quantity: number;
+    price: number;
+  }[];
+  materials?: {
+    id: string;
+    name: string;
+    quantity: number;
     price: number;
   }[];
 }
@@ -103,12 +106,12 @@ const CatalogPage: React.FC = () => {
 
   const getTotalMaterialsPrice = (cabinet: ExtendedCabinet) => {
     if (!cabinet.materials || cabinet.materials.length === 0) return 0;
-    return cabinet.materials.reduce((sum, material) => sum + material.price, 0);
+    return cabinet.materials.reduce((sum, material) => sum + (material.price || 0) * (material.quantity || 1), 0);
   };
 
   const getTotalAccessoriesPrice = (cabinet: ExtendedCabinet) => {
     if (!cabinet.accessories || cabinet.accessories.length === 0) return 0;
-    return cabinet.accessories.reduce((sum, accessory) => sum + accessory.price, 0);
+    return cabinet.accessories.reduce((sum, accessory) => sum + (accessory.price || 0) * (accessory.quantity || 1), 0);
   };
 
   if (loading) {
@@ -341,7 +344,7 @@ const CatalogPage: React.FC = () => {
                             {selectedCabinet.materials.map((material, index) => (
                               <tr key={material.id} className={index % 2 === 0 ? 'bg-muted/20' : ''}>
                                 <td className="p-2">{material.name}</td>
-                                <td className="text-right p-2">{formatPrice(material.price)}</td>
+                                <td className="text-right p-2">{formatPrice(material.price || 0)}</td>
                               </tr>
                             ))}
                           </tbody>
