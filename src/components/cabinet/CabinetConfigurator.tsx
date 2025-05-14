@@ -18,7 +18,7 @@ import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Separator } from '../../components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
 import { Progress } from '../../components/ui/progress';
-import { toast } from '../../components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { MaterialItem, AccessoryItem, calculatePieceCost, calculateHingeCost, calculateAccessoryCost } from '../../services/calculations';
 import { getAll, StorageKeys, getTaxonomies } from '../../services/storage';
 import { normalizeCabinet } from '@/utils/cabinetHelpers';
@@ -289,7 +289,7 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
     
     onSave(finalCabinet);
     toast({
-      title: "Success",
+      title: "Succes",
       description: "Corp salvat cu succes"
     });
     onClose();

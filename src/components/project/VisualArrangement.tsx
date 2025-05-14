@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 
 interface Cabinet {
   id: string;
@@ -106,11 +105,19 @@ const VisualArrangement: React.FC<VisualArrangementProps> = ({
     });
     
     if (maxX > roomWidth) {
-      toast.warning(`Corpurile depășesc limita peretelui cu ${(maxX - roomWidth).toFixed(1)} cm`);
+      toast({
+        title: "Avertizare",
+        description: `Corpurile depășesc limita peretelui cu ${(maxX - roomWidth).toFixed(1)} cm`,
+        variant: "warning"
+      });
       return false;
     }
     
-    toast.success('Corpurile se încadrează în limita peretelui');
+    toast({
+      title: "Succes",
+      description: 'Corpurile se încadrează în limita peretelui',
+      variant: "default"
+    });
     return true;
   };
 

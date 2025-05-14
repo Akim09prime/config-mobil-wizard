@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { StorageKeys, create, update } from '@/services/storage';
 import CabinetWrapper from '@/components/cabinet/CabinetWrapper';
 import { getFurniturePresets } from '@/services/storage';
 import { generateQuotePDF } from '@/services/pdf';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import {
   calculateProjectMaterialTotal,
   calculateProjectAccessoryTotal,
@@ -48,6 +47,8 @@ const NewProject: React.FC = () => {
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [materialTotal, setMaterialTotal] = useState(0);
   const [accessoryTotal, setAccessoryTotal] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentCabinet, setCurrentCabinet] = useState<Cabinet | null>(null);
 
   useEffect(() => {
     // Fix: Handle the promise correctly
@@ -167,6 +168,45 @@ const NewProject: React.FC = () => {
     }
   };
 
+  const handleAddCabinet = () => {
+    // Create a placeholder cabinet
+    const newCabinet: Cabinet = {
+      id: `cab_${Date.now()}`,
+      name: 'Corp nou',
+      width: 60,
+      height: 80,
+      depth: 60,
+      material: 'PAL',
+      price: 0,
+      quantity: 1,
+      accessories: []
+    };
+    setCurrentCabinet(newCabinet);
+    setIsModalOpen(true);
+  };
+
+  const handleEditCabinet = (cabinet: Cabinet) => {
+    setCurrentCabinet(cabinet);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveCabinet = (cabinet: Cabinet) => {
+    if (cabinets.some(c => c.id === cabinet.id)) {
+      // Update existing cabinet
+      setCabinets(cabinets.map(c => c.id === cabinet.id ? cabinet : c));
+    } else {
+      // Add new cabinet
+      setCabinets([...cabinets, cabinet]);
+    }
+    setIsModalOpen(false);
+    setCurrentCabinet(null);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setCurrentCabinet(null);
+  };
+
   return (
     <div>
       <Card>
@@ -212,9 +252,7 @@ const NewProject: React.FC = () => {
             </Select>
           </div>
 
-          {/* Fix CabinetWrapper to use appropriate props */}
           <div>
-            {/* For simplicity, putting the cabinet list and configuration directly here */}
             {cabinets.length > 0 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Corpuri adăugate</h3>
@@ -229,7 +267,7 @@ const NewProject: React.FC = () => {
                         <p>Preț: {cabinet.price} RON</p>
                       </CardContent>
                       <CardFooter className="pt-2 flex justify-end space-x-2">
-                        <Button size="sm" variant="outline" onClick={() => updateCabinet(cabinet.id, cabinet)}>
+                        <Button size="sm" variant="outline" onClick={() => handleEditCabinet(cabinet)}>
                           Editează
                         </Button>
                         <Button size="sm" variant="destructive" onClick={() => deleteCabinet(cabinet.id)}>
@@ -242,21 +280,7 @@ const NewProject: React.FC = () => {
               </div>
             )}
             
-            <Button onClick={() => {
-              // Create a placeholder cabinet
-              const newCabinet: Cabinet = {
-                id: `cab_${Date.now()}`,
-                name: 'Corp nou',
-                width: 60,
-                height: 80,
-                depth: 60,
-                material: 'PAL',
-                price: 0,
-                quantity: 1,
-                accessories: []
-              };
-              addCabinet(newCabinet);
-            }} className="mt-4">
+            <Button onClick={handleAddCabinet} className="mt-4">
               Adaugă Corp Nou
             </Button>
           </div>
@@ -276,6 +300,13 @@ const NewProject: React.FC = () => {
           <Button onClick={handleSubmit}>Crează Proiect</Button>
         </CardFooter>
       </Card>
+
+      <CabinetWrapper
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        onSave={handleSaveCabinet}
+        initialCabinet={currentCabinet || {}}
+      />
     </div>
   );
 };
