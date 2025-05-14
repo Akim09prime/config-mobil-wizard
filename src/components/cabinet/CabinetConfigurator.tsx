@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -22,34 +21,9 @@ import { Progress } from '../../components/ui/progress';
 import { toast } from '../../components/ui/use-toast';
 import { MaterialItem, AccessoryItem, calculatePieceCost, calculateHingeCost, calculateAccessoryCost } from '../../services/calculations';
 import { getAll, StorageKeys, getTaxonomies } from '../../services/storage';
+import { normalizeCabinet } from '@/utils/cabinetHelpers';
 
-export interface Cabinet {
-  id?: string;
-  name: string;
-  category: string;
-  subcategory: string;
-  dimensions: {
-    width: number;
-    height: number;
-    depth: number;
-  };
-  pieces: {
-    id: string;
-    name: string;
-    material: string;
-    width: number;
-    height: number;
-    depth?: number;
-    quantity: number;
-  }[];
-  accessories: {
-    id: string;
-    name: string;
-    quantity: number;
-    price: number;
-  }[];
-  totalCost: number;
-}
+// Using the global Cabinet interface defined in vite-env.d.ts
 
 interface CabinetConfiguratorProps {
   open: boolean;
@@ -81,6 +55,7 @@ interface Taxonomy {
 }
 
 const defaultCabinet: Cabinet = {
+  id: '',
   name: 'Corp nou',
   category: '',
   subcategory: '',
@@ -89,9 +64,14 @@ const defaultCabinet: Cabinet = {
     height: 720,
     depth: 560
   },
+  width: 600,
+  height: 720,
+  depth: 560,
   pieces: [],
   accessories: [],
-  totalCost: 0
+  totalCost: 0,
+  price: 0,
+  image: null
 };
 
 const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
@@ -172,7 +152,8 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
       dimensions: {
         ...prev.dimensions,
         [dimension]: value
-      }
+      },
+      [dimension]: value // Update the top-level property as well
     }));
     
     // Validate against max width if provided
@@ -269,7 +250,7 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
       return;
     }
     
-    // Create final cabinet object
+    // Create final cabinet object with normalized values
     const selectedAccessoriesArray = accessories
       .filter(acc => selectedAccessories[acc.id])
       .map(acc => ({ 
@@ -279,16 +260,23 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
         price: acc.price
       }));
     
-    const finalCabinet: Cabinet = {
+    let finalCabinet: Cabinet = {
       ...cabinet,
       accessories: selectedAccessoriesArray,
-      totalCost: calculateCabinetCost()
+      totalCost: calculateCabinetCost(),
+      // Ensure top-level dimension properties
+      width: cabinet.dimensions.width,
+      height: cabinet.dimensions.height,
+      depth: cabinet.dimensions.depth
     };
     
     // Add an ID if this is a new cabinet
     if (!finalCabinet.id) {
       finalCabinet.id = `cab_${Date.now()}`;
     }
+    
+    // Normalize before saving to ensure all required properties are set
+    finalCabinet = normalizeCabinet(finalCabinet);
     
     onSave(finalCabinet);
     toast({

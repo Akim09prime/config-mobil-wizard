@@ -12,10 +12,25 @@ interface Cabinet {
     height: number;
     depth: number;
   };
-  // Ensuring all Cabinet objects have these properties
   width: number;
   height: number;
   depth: number;
   price: number;
   image: string | null;
+  pieces?: {
+    id: string;
+    name: string;
+    material: string;
+    width: number;
+    height: number;
+    depth?: number;
+    quantity: number;
+  }[];
+  accessories?: {
+    id: string;
+    name: string;
+    quantity: number;
+    price: number;
+  }[];
+  totalCost?: number;
 }

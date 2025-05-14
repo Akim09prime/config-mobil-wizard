@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import CabinetConfigurator from '@/components/cabinet/CabinetConfigurator';
+import CabinetWrapper from '@/components/cabinet/CabinetWrapper';
 import { getFurniturePresets } from '@/services/storage';
 import { generateQuotePDF } from '@/services/pdf';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +17,7 @@ import {
   PricingSettings,
   ProjectTotalResult
 } from '@/services/calculations';
+import { normalizeCabinet } from '@/utils/cabinetHelpers';
 
 interface Cabinet {
   id: string;
@@ -45,7 +45,7 @@ const NewProject: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
-  const [presets, setPresets] = useState<any[]>([]);
+  const [presets, setPresets] = useState<Cabinet[]>([]);
   const [showCabinetConfigurator, setShowCabinetConfigurator] = useState(false);
   const [showCabinetConfiguratorEdit, setShowCabinetConfiguratorEdit] = useState(false);
   const [cabinetToEdit, setCabinetToEdit] = useState<Cabinet | null>(null);
@@ -68,7 +68,9 @@ const NewProject: React.FC = () => {
     const loadPresets = async () => {
       try {
         const presetsData = await getFurniturePresets();
-        setPresets(presetsData || []);
+        // Ensure all preset cabinets have required properties
+        const normalizedPresets = presetsData?.map(preset => normalizeCabinet(preset)) || [];
+        setPresets(normalizedPresets);
       } catch (error) {
         console.error('Failed to load presets:', error);
       }
@@ -129,24 +131,26 @@ const NewProject: React.FC = () => {
     setShowCabinetConfiguratorEdit(true);
   };
 
-  const handleAddPreset = (preset: any) => {
-    const newCabinet = {
-      ...preset,
-      id: `cab_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-    };
-    
-    setProject(prev => ({
-      ...prev,
-      cabinets: [...prev.cabinets, newCabinet]
-    }));
-  };
-
-  const handleConfigurePreset = (preset: any) => {
-    // Here you would set the preset data as the initial value for the configurator
-    setCabinetToEdit({
+  const handleAddPreset = (preset: Cabinet) => {
+    // Normalize the preset to ensure it has all required properties
+    const normalizedCabinet = normalizeCabinet({
       ...preset,
       id: `cab_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
     });
+    
+    setProject(prev => ({
+      ...prev,
+      cabinets: [...prev.cabinets, normalizedCabinet]
+    }));
+  };
+
+  const handleConfigurePreset = (preset: Cabinet) => {
+    // Normalize the preset to ensure it has all required properties
+    const normalizedCabinet = normalizeCabinet({
+      ...preset,
+      id: `cab_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+    });
+    setCabinetToEdit(normalizedCabinet);
     setShowCabinetConfigurator(true);
   };
 
@@ -609,30 +613,31 @@ const NewProject: React.FC = () => {
       )}
       
       {showCabinetConfigurator && (
-        <CabinetConfigurator
+        <CabinetWrapper
           open={showCabinetConfigurator}
           onClose={() => setShowCabinetConfigurator(false)}
           onSave={(cabinet) => {
-            // Handle cabinet saving logic
+            const normalizedCabinet = normalizeCabinet(cabinet);
             setProject(prev => ({
               ...prev,
-              cabinets: [...prev.cabinets, cabinet]
+              cabinets: [...prev.cabinets, normalizedCabinet]
             }));
             setShowCabinetConfigurator(false);
           }}
         />
       )}
       
-      {showCabinetConfiguratorEdit && (
-        <CabinetConfigurator
+      {showCabinetConfiguratorEdit && cabinetToEdit && (
+        <CabinetWrapper
           open={showCabinetConfiguratorEdit}
           onClose={() => setShowCabinetConfiguratorEdit(false)}
           onSave={(cabinet) => {
-            // Handle edit cabinet saving logic
+            // Normalize the cabinet to ensure it has all required properties
+            const normalizedCabinet = normalizeCabinet(cabinet);
             const updatedCabinets = [...project.cabinets];
-            const index = updatedCabinets.findIndex(c => c.id === cabinetToEdit?.id);
+            const index = updatedCabinets.findIndex(c => c.id === cabinetToEdit.id);
             if (index !== -1) {
-              updatedCabinets[index] = cabinet;
+              updatedCabinets[index] = normalizedCabinet;
             }
             setProject(prev => ({
               ...prev,
