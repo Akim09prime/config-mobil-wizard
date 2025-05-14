@@ -18,6 +18,10 @@ interface Cabinet {
   height: number;
   depth: number;
   price: number;
+  category?: string;
+  subcategory?: string;
+  dimensions?: { width: number; height: number; depth: number };
+  image?: string | null;
 }
 
 interface Project {
@@ -49,10 +53,9 @@ const Projects: React.FC = () => {
       setLoading(false);
     } catch (error) {
       console.error('Error loading projects:', error);
-      toast({
+      toast.error({
         title: 'Eroare',
         description: 'Nu s-au putut încărca proiectele',
-        variant: 'destructive'
       });
       setLoading(false);
     }
@@ -68,10 +71,9 @@ const Projects: React.FC = () => {
       setProjectToEdit(project);
       setIsEditModalOpen(true);
     } else {
-      toast({
+      toast.error({
         title: 'Eroare',
         description: 'Proiectul nu a fost găsit',
-        variant: 'destructive'
       });
     }
   };
@@ -85,24 +87,22 @@ const Projects: React.FC = () => {
       try {
         const success = remove(StorageKeys.PROJECTS, projectToDelete);
         if (success) {
-          toast({
+          toast.success({
             title: 'Succes',
             description: 'Proiectul a fost șters cu succes'
           });
           loadProjects();
         } else {
-          toast({
+          toast.error({
             title: 'Eroare',
             description: 'Nu s-a putut șterge proiectul',
-            variant: 'destructive'
           });
         }
       } catch (error) {
         console.error('Error deleting project:', error);
-        toast({
+        toast.error({
           title: 'Eroare',
           description: 'Nu s-a putut șterge proiectul',
-          variant: 'destructive'
         });
       }
       setProjectToDelete(null);

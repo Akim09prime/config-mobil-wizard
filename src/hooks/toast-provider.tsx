@@ -24,9 +24,16 @@ export function useToast() {
   return context
 }
 
-export function toast(props: Omit<ToasterToast, "id">) {
+export function toast(props: Omit<ToasterToast, "id"> | string) {
+  // Get the toast context (which will throw if outside a ToastProvider)
   const { addToast } = useToast()
-  return addToast(props)
+  
+  // Convert string to proper toast object if necessary
+  const toastProps = typeof props === 'string' 
+    ? { description: props } 
+    : props
+    
+  return addToast(toastProps)
 }
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
