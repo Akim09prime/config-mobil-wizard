@@ -29,9 +29,10 @@ interface CabinetConfiguratorProps {
   open: boolean;
   onClose: () => void;
   onSave: (cabinet: Cabinet) => void;
-  onCancel?: () => void; // Added this prop
+  onCancel?: () => void; 
   initialCabinet?: Partial<Cabinet>;
   maxWidth?: number;
+  projectId?: string; // Added this prop
 }
 
 // Define an interface for the taxonomies structure
@@ -80,7 +81,8 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
   onSave,
   onCancel,
   initialCabinet = {},
-  maxWidth
+  maxWidth,
+  projectId // Added this to the destructuring
 }) => {
   const [cabinet, setCabinet] = useState<Cabinet>({
     ...defaultCabinet,
@@ -94,6 +96,13 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
   const [accessoryQuantities, setAccessoryQuantities] = useState<Record<string, number>>({});
   const [currentTab, setCurrentTab] = useState('dimensions');
   const [errors, setErrors] = useState<string[]>([]);
+
+  // Log projectId when it changes for debugging
+  useEffect(() => {
+    if (projectId) {
+      console.log('🔧 CabinetConfigurator received projectId:', projectId);
+    }
+  }, [projectId]);
 
   // Load data from storage
   useEffect(() => {
@@ -302,6 +311,7 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
           <DialogTitle>Configurator Corp Mobilier</DialogTitle>
           <DialogDescription>
             Configurați dimensiunile, materialele și accesoriile pentru corpul de mobilier.
+            {projectId && <span className="text-xs ml-1">(Proiect: {projectId})</span>}
           </DialogDescription>
         </DialogHeader>
         
