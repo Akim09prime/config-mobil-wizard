@@ -8,6 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import AddProjectModal from '@/components/modals/AddProjectModal';
+import EditProjectModal from '@/components/modals/EditProjectModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Project {
@@ -23,6 +24,8 @@ const Projects: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
 
   useEffect(() => {
@@ -50,11 +53,17 @@ const Projects: React.FC = () => {
   };
 
   const handleEditProject = (id: string) => {
-    // În versiunea completă, aici ar trebui să deschideți un modal pentru editare
-    toast({
-      title: 'Notă',
-      description: 'Funcționalitatea de editare va fi implementată în versiunea următoare'
-    });
+    const project = projects.find(p => p.id === id);
+    if (project) {
+      setProjectToEdit(project);
+      setIsEditModalOpen(true);
+    } else {
+      toast({
+        title: 'Eroare',
+        description: 'Proiectul nu a fost găsit',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleDeleteProject = (id: string) => {
@@ -184,6 +193,16 @@ const Projects: React.FC = () => {
         open={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
         onProjectAdded={loadProjects}
+      />
+
+      <EditProjectModal
+        open={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setProjectToEdit(null);
+        }}
+        onProjectUpdated={loadProjects}
+        project={projectToEdit}
       />
 
       <AlertDialog open={projectToDelete !== null} onOpenChange={() => setProjectToDelete(null)}>
