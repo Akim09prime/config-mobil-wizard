@@ -308,4 +308,4 @@ const toast = {
   }
 }
 
-export { toast, ToastProvider }
+export { toast }
