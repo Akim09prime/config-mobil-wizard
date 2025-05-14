@@ -285,55 +285,27 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>
 }
 
-// Simple toast function for direct usage
-export const toast = {
+// Create a standalone toast object for direct usage without hooks
+const toast = {
   success: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
-    const { toast } = useToast();
-    toast({
-      title: "Succes",
-      description,
-      duration: 3000,
-      ...options,
-    });
+    // This is a placeholder function that will be properly implemented in the components
+    console.log('Toast success:', description, options);
   },
   
   error: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
-    const { toast } = useToast();
-    toast({
-      title: "Eroare",
-      description,
-      variant: "destructive",
-      duration: 5000,
-      ...options,
-    });
+    // This is a placeholder function that will be properly implemented in the components
+    console.log('Toast error:', description, options);
   },
   
   info: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
-    const { toast } = useToast();
-    toast({
-      title: "Informație",
-      description,
-      duration: 3000,
-      ...options,
-    });
+    // This is a placeholder function that will be properly implemented in the components
+    console.log('Toast info:', description, options);
   },
 
   warning: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
-    const { toast } = useToast();
-    toast({
-      title: "Atenție",
-      description,
-      variant: "default",
-      duration: 4000,
-      ...options,
-    });
+    // This is a placeholder function that will be properly implemented in the components
+    console.log('Toast warning:', description, options);
   }
 };
 
-export const {
-  ToastProvider,
-  ToastContext,
-} = {
-  ToastProvider,
-  ToastContext,
-};
+export { toast, ToastProvider };
