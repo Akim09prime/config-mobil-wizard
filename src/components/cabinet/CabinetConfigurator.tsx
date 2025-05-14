@@ -17,7 +17,9 @@ import { Checkbox } from '../../components/ui/checkbox';
 import { Slider } from '../../components/ui/slider';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Separator } from '../../components/ui/separator';
-import { toast } from 'sonner';
+import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
+import { Progress } from '../../components/ui/progress';
+import { toast } from '../../components/ui/use-toast';
 import { MaterialItem, AccessoryItem, calculatePieceCost, calculateHingeCost, calculateAccessoryCost } from '../../services/calculations';
 import { getAll, StorageKeys, getTaxonomies } from '../../services/storage';
 
@@ -239,17 +241,29 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
   // Handle save
   const handleSave = () => {
     if (cabinet.name.trim() === '') {
-      toast.error('Numele corpului este obligatoriu');
+      toast({
+        title: "Eroare",
+        description: "Numele corpului este obligatoriu",
+        variant: "destructive"
+      });
       return;
     }
     
     if (cabinet.category === '') {
-      toast.error('Selectați o categorie');
+      toast({
+        title: "Eroare",
+        description: "Selectați o categorie",
+        variant: "destructive"
+      });
       return;
     }
     
     if (errors.length > 0) {
-      toast.error('Rezolvați erorile înainte de a salva');
+      toast({
+        title: "Eroare",
+        description: "Rezolvați erorile înainte de a salva",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -275,7 +289,10 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
     }
     
     onSave(finalCabinet);
-    toast.success('Corp salvat cu succes');
+    toast({
+      title: "Success",
+      description: "Corp salvat cu succes"
+    });
     onClose();
   };
 
