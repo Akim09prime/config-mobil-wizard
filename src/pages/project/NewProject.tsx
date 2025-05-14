@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -107,7 +108,10 @@ const NewProject: React.FC = () => {
   };
 
   const handleConfigurePreset = (preset: Cabinet) => {
-    const norm = normalizeCabinet({ ...preset, id: `cab_${Date.now()}_${Math.random().toString(36).slice(2)}` });
+    const norm = normalizeCabinet({
+      ...preset,
+      id: `cab_${Date.now()}_${Math.random().toString(36).slice(2)}`
+    });
     setCabinetToEdit(norm);
     setShowCabinetConfiguratorEdit(true);
   };
