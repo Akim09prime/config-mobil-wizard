@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -5,28 +6,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { StorageKeys, create, update } from '@/services/storage';
+import { StorageKeys, create, update, getFurniturePresets } from '@/services/storage';
 import CabinetWrapper from '@/components/cabinet/CabinetWrapper';
-import { getFurniturePresets } from '@/services/storage';
 import { generateQuotePDF } from '@/services/pdf';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import {
   calculateProjectMaterialTotal,
   calculateProjectAccessoryTotal,
 } from '@/services/calculations';
 
-interface Cabinet {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  depth: number;
-  material: string;
-  price: number;
-  quantity: number;
-  accessories: { id: string; name: string; price: number }[];
-  notes?: string;
-}
+// Remove the local Cabinet interface and use the global one from vite-env.d.ts
 
 interface Project {
   id: string;
@@ -40,6 +29,7 @@ interface Project {
 
 const NewProject: React.FC = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [projectName, setProjectName] = useState('');
   const [clientName, setClientName] = useState('');
   const [cabinets, setCabinets] = useState<Cabinet[]>([]);
@@ -104,12 +94,20 @@ const NewProject: React.FC = () => {
 
   const handleSubmit = () => {
     if (!projectName || !clientName) {
-      toast.error('Numele proiectului și numele clientului sunt obligatorii.');
+      toast({
+        title: "Eroare",
+        description: 'Numele proiectului și numele clientului sunt obligatorii.',
+        variant: "destructive"
+      });
       return;
     }
 
     if (cabinets.length === 0) {
-      toast.error('Adăugați cel puțin un corp pentru a crea proiectul.');
+      toast({
+        title: "Eroare",
+        description: 'Adăugați cel puțin un corp pentru a crea proiectul.',
+        variant: "destructive"
+      });
       return;
     }
 
@@ -132,22 +130,37 @@ const NewProject: React.FC = () => {
 
     try {
       create(StorageKeys.PROJECTS, newProject);
-      toast.success('Proiectul a fost creat cu succes!');
+      toast({
+        title: "Succes",
+        description: 'Proiectul a fost creat cu succes!'
+      });
       navigate('/admin/projects');
     } catch (error) {
       console.error('Error creating project:', error);
-      toast.error('Nu s-a putut crea proiectul.');
+      toast({
+        title: "Eroare",
+        description: 'Nu s-a putut crea proiectul.',
+        variant: "destructive"
+      });
     }
   };
 
   const handleGeneratePDF = async () => {
     if (!projectName || !clientName) {
-      toast.error('Numele proiectului și numele clientului sunt obligatorii.');
+      toast({
+        title: "Eroare",
+        description: 'Numele proiectului și numele clientului sunt obligatorii.',
+        variant: "destructive"
+      });
       return;
     }
 
     if (cabinets.length === 0) {
-      toast.error('Adăugați cel puțin un corp pentru a genera oferta.');
+      toast({
+        title: "Eroare",
+        description: 'Adăugați cel puțin un corp pentru a genera oferta.',
+        variant: "destructive"
+      });
       return;
     }
 
@@ -161,25 +174,34 @@ const NewProject: React.FC = () => {
 
     try {
       await generateQuotePDF(projectData);
-      toast.success('Oferta a fost generată cu succes!');
+      toast({
+        title: "Succes",
+        description: 'Oferta a fost generată cu succes!'
+      });
     } catch (error) {
       console.error('Error generating PDF:', error);
-      toast.error('Nu s-a putut genera oferta.');
+      toast({
+        title: "Eroare",
+        description: 'Nu s-a putut genera oferta.',
+        variant: "destructive"
+      });
     }
   };
 
   const handleAddCabinet = () => {
-    // Create a placeholder cabinet
+    // Create a placeholder cabinet that's compatible with the global Cabinet interface
     const newCabinet: Cabinet = {
       id: `cab_${Date.now()}`,
       name: 'Corp nou',
-      width: 60,
-      height: 80,
-      depth: 60,
-      material: 'PAL',
+      width: 600,
+      height: 720,
+      depth: 560,
       price: 0,
+      // Add the missing required properties
+      material: 'PAL',
       quantity: 1,
-      accessories: []
+      accessories: [], // This should include quantity property for each accessory
+      totalCost: 0
     };
     setCurrentCabinet(newCabinet);
     setIsModalOpen(true);
