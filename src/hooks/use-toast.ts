@@ -286,26 +286,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 }
 
 // Create a standalone toast object for direct usage without hooks
-const toast = {
+export const toast = {
   success: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
-    // This is a placeholder function that will be properly implemented in the components
     console.log('Toast success:', description, options)
   },
   
   error: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
-    // This is a placeholder function that will be properly implemented in the components
     console.log('Toast error:', description, options)
   },
   
   info: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
-    // This is a placeholder function that will be properly implemented in the components
     console.log('Toast info:', description, options)
   },
 
   warning: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
-    // This is a placeholder function that will be properly implemented in the components
     console.log('Toast warning:', description, options)
   }
 }
-
-export { toast }
