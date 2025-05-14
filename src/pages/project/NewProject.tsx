@@ -66,6 +66,7 @@ const NewProject: React.FC = () => {
 
   useEffect(() => {
     if (currentStep === 3) {
+      // Handle the Promise returned by getFurniturePresets properly
       getFurniturePresets()
         .then(data => setPresets(data.map(normalizeCabinet)))
         .catch(err => console.error('Failed to load presets:', err));

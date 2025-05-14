@@ -146,13 +146,13 @@ const defaultData = {
 };
 
 // Get furniture presets for project
-export const getFurniturePresets = () => {
+export const getFurniturePresets = async (): Promise<any[]> => {
   try {
     // For now, just return cabinets as presets
-    return getAll(StorageKeys.CABINETS);
+    return Promise.resolve(getAll(StorageKeys.CABINETS));
   } catch (error) {
     console.error('Error getting furniture presets:', error);
-    return [];
+    return Promise.resolve([]);
   }
 };
 
