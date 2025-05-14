@@ -10,27 +10,32 @@ export const toast = {
   // Base function to show toast
   // This allows both object style: toast({ title: "Hello", description: "World" })
   // and string style: toast("Hello World")
-  (props: ToastProps | string) {
+  default: function(props: ToastProps | string) {
     return showToast(props)
   },
   
   // Variant convenience functions
-  success(props: Partial<ToastProps> | string) {
+  success: function(props: Partial<ToastProps> | string) {
     const toastProps = typeof props === 'string' ? { description: props } : props
     return showToast({ ...toastProps, variant: "default" })
   },
-  error(props: Partial<ToastProps> | string) {
+  error: function(props: Partial<ToastProps> | string) {
     const toastProps = typeof props === 'string' ? { description: props } : props
     return showToast({ ...toastProps, variant: "destructive" })
   },
-  warning(props: Partial<ToastProps> | string) {
+  warning: function(props: Partial<ToastProps> | string) {
     const toastProps = typeof props === 'string' ? { description: props } : props
     return showToast({ ...toastProps, variant: "warning" })
   },
-  info(props: Partial<ToastProps> | string) {
+  info: function(props: Partial<ToastProps> | string) {
     const toastProps = typeof props === 'string' ? { description: props } : props
     return showToast({ ...toastProps, variant: "info" })
   }
+}
+
+// Make the toast object also callable as a function
+export function toast(props: ToastProps | string) {
+  return toast.default(props)
 }
 
 export { useToast, ToastProvider }
