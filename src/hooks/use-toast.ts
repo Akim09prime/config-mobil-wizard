@@ -289,23 +289,23 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 const toast = {
   success: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
     // This is a placeholder function that will be properly implemented in the components
-    console.log('Toast success:', description, options);
+    console.log('Toast success:', description, options)
   },
   
   error: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
     // This is a placeholder function that will be properly implemented in the components
-    console.log('Toast error:', description, options);
+    console.log('Toast error:', description, options)
   },
   
   info: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
     // This is a placeholder function that will be properly implemented in the components
-    console.log('Toast info:', description, options);
+    console.log('Toast info:', description, options)
   },
 
   warning: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
     // This is a placeholder function that will be properly implemented in the components
-    console.log('Toast warning:', description, options);
+    console.log('Toast warning:', description, options)
   }
-};
+}
 
-export { toast, ToastProvider };
+export { toast, ToastProvider }
