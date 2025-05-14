@@ -109,6 +109,7 @@ const NewProject: React.FC = () => {
   };
 
   const handleConfigurePreset = (preset: Cabinet) => {
+    console.log('🔧 handleConfigurePreset called for preset:', preset);
     const norm = normalizeCabinet({
       ...preset,
       id: `cab_${Date.now()}_${Math.random().toString(36).slice(2)}`

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import CabinetConfigurator from './CabinetConfigurator';
 import { normalizeCabinet } from '@/utils/cabinetHelpers';
 
@@ -24,6 +24,14 @@ const CabinetWrapper: React.FC<CabinetWrapperProps> = ({
   initialCabinet = {},
   maxWidth
 }) => {
+  // Add debugging log to verify the open prop value
+  console.log('🔧 CabinetWrapper open:', open);
+  
+  // Log when props change
+  useEffect(() => {
+    console.log('🔧 CabinetWrapper props changed - open:', open, 'initialCabinet:', initialCabinet);
+  }, [open, initialCabinet]);
+
   // Normalize initial cabinet if provided
   const normalizedInitialCabinet = initialCabinet ? normalizeCabinet(initialCabinet) : undefined;
   
