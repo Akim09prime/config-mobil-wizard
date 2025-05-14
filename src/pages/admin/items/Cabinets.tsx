@@ -1,12 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { StorageKeys, getAll } from '@/services/storage';
+import { StorageKeys, getAll, save, update, remove } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
 import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Cabinet {
   id: string;
@@ -25,49 +29,189 @@ interface Cabinet {
 const CabinetItems: React.FC = () => {
   const [cabinets, setCabinets] = useState<Cabinet[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState<boolean>(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState<boolean>(false);
+  const [cabinetToDelete, setCabinetToDelete] = useState<string | null>(null);
+  const [newCabinet, setNewCabinet] = useState<Partial<Cabinet>>({
+    name: '',
+    category: '',
+    subcategory: '',
+    dimensions: { width: 0, height: 0, depth: 0 },
+    price: 0,
+    image: null
+  });
+  const [editingCabinet, setEditingCabinet] = useState<Cabinet | null>(null);
 
   useEffect(() => {
-    const loadCabinets = async () => {
-      try {
-        const cabinetsData = getAll<Cabinet>(StorageKeys.CABINETS);
-        setCabinets(cabinetsData);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error loading cabinets:', error);
-        toast({
-          title: 'Eroare',
-          description: 'Nu s-au putut încărca corpurile mobilier',
-          variant: 'destructive'
-        });
-        setLoading(false);
-      }
-    };
-
     loadCabinets();
   }, []);
 
+  const loadCabinets = () => {
+    try {
+      const cabinetsData = getAll<Cabinet>(StorageKeys.CABINETS) || [];
+      setCabinets(cabinetsData);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading cabinets:', error);
+      toast({
+        title: 'Eroare',
+        description: 'Nu s-au putut încărca corpurile mobilier',
+        variant: 'destructive'
+      });
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
+    if (isEditDialogOpen && editingCabinet) {
+      if (name.startsWith('dimension_')) {
+        const dimension = name.split('_')[1] as 'width' | 'height' | 'depth';
+        setEditingCabinet({
+          ...editingCabinet,
+          dimensions: {
+            ...editingCabinet.dimensions,
+            [dimension]: parseFloat(value)
+          }
+        });
+      } else {
+        setEditingCabinet({
+          ...editingCabinet,
+          [name]: name === 'price' ? parseFloat(value) : value
+        });
+      }
+    } else {
+      if (name.startsWith('dimension_')) {
+        const dimension = name.split('_')[1] as 'width' | 'height' | 'depth';
+        setNewCabinet({
+          ...newCabinet,
+          dimensions: {
+            ...newCabinet.dimensions!,
+            [dimension]: parseFloat(value)
+          }
+        });
+      } else {
+        setNewCabinet({
+          ...newCabinet,
+          [name]: name === 'price' ? parseFloat(value) : value
+        });
+      }
+    }
+  };
+
   const handleAddCabinet = () => {
-    // În versiunea completă, aici ar trebui să deschideți un modal pentru adăugare
-    toast({
-      title: 'Notă',
-      description: 'Funcționalitatea de adăugare va fi implementată în versiunea următoare'
+    setNewCabinet({
+      name: '',
+      category: '',
+      subcategory: '',
+      dimensions: { width: 0, height: 0, depth: 0 },
+      price: 0,
+      image: null
     });
+    setIsAddDialogOpen(true);
   };
 
   const handleEditCabinet = (id: string) => {
-    // În versiunea completă, aici ar trebui să deschideți un modal pentru editare
-    toast({
-      title: 'Notă',
-      description: 'Funcționalitatea de editare va fi implementată în versiunea următoare'
-    });
+    const cabinet = cabinets.find(c => c.id === id);
+    if (cabinet) {
+      setEditingCabinet(cabinet);
+      setIsEditDialogOpen(true);
+    }
   };
 
   const handleDeleteCabinet = (id: string) => {
-    // În versiunea completă, aici ar trebui să confirmați și apoi să ștergeți
-    toast({
-      title: 'Notă',
-      description: 'Funcționalitatea de ștergere va fi implementată în versiunea următoare'
-    });
+    setCabinetToDelete(id);
+  };
+
+  const confirmDelete = () => {
+    if (cabinetToDelete) {
+      try {
+        const success = remove(StorageKeys.CABINETS, cabinetToDelete);
+        if (success) {
+          toast({
+            title: 'Succes',
+            description: 'Corpul de mobilier a fost șters cu succes'
+          });
+          loadCabinets();
+        } else {
+          toast({
+            title: 'Eroare',
+            description: 'Nu s-a putut șterge corpul de mobilier',
+            variant: 'destructive'
+          });
+        }
+      } catch (error) {
+        console.error('Error deleting cabinet:', error);
+        toast({
+          title: 'Eroare',
+          description: 'Nu s-a putut șterge corpul de mobilier',
+          variant: 'destructive'
+        });
+      }
+      setCabinetToDelete(null);
+    }
+  };
+
+  const saveNewCabinet = () => {
+    if (!newCabinet.name || !newCabinet.category || newCabinet.price === undefined) {
+      toast({
+        title: 'Eroare',
+        description: 'Completați toate câmpurile obligatorii',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const cabinetToSave = {
+        ...newCabinet,
+        id: `cab_${Date.now()}`
+      } as Cabinet;
+
+      save(StorageKeys.CABINETS, cabinetToSave);
+      toast({
+        title: 'Succes',
+        description: 'Corpul de mobilier a fost adăugat cu succes'
+      });
+      setIsAddDialogOpen(false);
+      loadCabinets();
+    } catch (error) {
+      console.error('Error adding cabinet:', error);
+      toast({
+        title: 'Eroare',
+        description: 'Nu s-a putut adăuga corpul de mobilier',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const saveEditedCabinet = () => {
+    if (!editingCabinet || !editingCabinet.name || !editingCabinet.category) {
+      toast({
+        title: 'Eroare',
+        description: 'Completați toate câmpurile obligatorii',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      update(StorageKeys.CABINETS, editingCabinet.id, editingCabinet);
+      toast({
+        title: 'Succes',
+        description: 'Corpul de mobilier a fost actualizat cu succes'
+      });
+      setIsEditDialogOpen(false);
+      loadCabinets();
+    } catch (error) {
+      console.error('Error updating cabinet:', error);
+      toast({
+        title: 'Eroare',
+        description: 'Nu s-a putut actualiza corpul de mobilier',
+        variant: 'destructive'
+      });
+    }
   };
 
   if (loading) {
@@ -158,6 +302,204 @@ const CabinetItems: React.FC = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Dialog pentru adăugare corp nou */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adaugă Corp Mobilier</DialogTitle>
+            <DialogDescription>
+              Completați detaliile pentru noul corp de mobilier
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Nume</Label>
+              <Input
+                id="name"
+                name="name"
+                value={newCabinet.name}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="category">Categorie</Label>
+              <Input
+                id="category"
+                name="category"
+                value={newCabinet.category}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="subcategory">Subcategorie</Label>
+              <Input
+                id="subcategory"
+                name="subcategory"
+                value={newCabinet.subcategory}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="dimension_width">Lățime (mm)</Label>
+                <Input
+                  id="dimension_width"
+                  name="dimension_width"
+                  type="number"
+                  value={newCabinet.dimensions?.width}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="dimension_height">Înălțime (mm)</Label>
+                <Input
+                  id="dimension_height"
+                  name="dimension_height"
+                  type="number"
+                  value={newCabinet.dimensions?.height}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="dimension_depth">Adâncime (mm)</Label>
+                <Input
+                  id="dimension_depth"
+                  name="dimension_depth"
+                  type="number"
+                  value={newCabinet.dimensions?.depth}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="price">Preț (RON)</Label>
+              <Input
+                id="price"
+                name="price"
+                type="number"
+                value={newCabinet.price}
+                onChange={handleInputChange}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              Anulează
+            </Button>
+            <Button onClick={saveNewCabinet}>Salvează</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog pentru editare corp */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editează Corp Mobilier</DialogTitle>
+            <DialogDescription>
+              Modificați detaliile corpului de mobilier
+            </DialogDescription>
+          </DialogHeader>
+          {editingCabinet && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-name">Nume</Label>
+                <Input
+                  id="edit-name"
+                  name="name"
+                  value={editingCabinet.name}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-category">Categorie</Label>
+                <Input
+                  id="edit-category"
+                  name="category"
+                  value={editingCabinet.category}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-subcategory">Subcategorie</Label>
+                <Input
+                  id="edit-subcategory"
+                  name="subcategory"
+                  value={editingCabinet.subcategory}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-dimension_width">Lățime (mm)</Label>
+                  <Input
+                    id="edit-dimension_width"
+                    name="dimension_width"
+                    type="number"
+                    value={editingCabinet.dimensions.width}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-dimension_height">Înălțime (mm)</Label>
+                  <Input
+                    id="edit-dimension_height"
+                    name="dimension_height"
+                    type="number"
+                    value={editingCabinet.dimensions.height}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-dimension_depth">Adâncime (mm)</Label>
+                  <Input
+                    id="edit-dimension_depth"
+                    name="dimension_depth"
+                    type="number"
+                    value={editingCabinet.dimensions.depth}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-price">Preț (RON)</Label>
+                <Input
+                  id="edit-price"
+                  name="price"
+                  type="number"
+                  value={editingCabinet.price}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Anulează
+            </Button>
+            <Button onClick={saveEditedCabinet}>Salvează</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog pentru confirmare ștergere */}
+      <AlertDialog open={cabinetToDelete !== null} onOpenChange={() => setCabinetToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmare ștergere</AlertDialogTitle>
+            <AlertDialogDescription>
+              Sunteți sigur că doriți să ștergeți acest corp de mobilier? Această acțiune nu poate fi anulată.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anulare</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+              Șterge
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
