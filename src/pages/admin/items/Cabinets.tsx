@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,8 +12,9 @@ import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { normalizeCabinet } from '@/utils/cabinetHelpers';
 import { TaxonomySelect, SubcategorySelect } from '@/components/TaxonomySelect';
-
-// Cabinet interface is now defined in vite-env.d.ts globally
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { calculatePieceCost, calculateAccessoryCost, MaterialItem, AccessoryItem } from '@/services/calculations';
 
 const CabinetItems: React.FC = () => {
   const [cabinets, setCabinets] = useState<Cabinet[]>([]);
@@ -29,12 +31,21 @@ const CabinetItems: React.FC = () => {
     height: 0,
     depth: 0,
     price: 0,
-    image: null
+    image: null,
+    pieces: [],
+    accessories: []
   });
   const [editingCabinet, setEditingCabinet] = useState<Cabinet | null>(null);
+  const [materials, setMaterials] = useState<MaterialItem[]>([]);
+  const [accessories, setAccessories] = useState<AccessoryItem[]>([]);
+  const [selectedMaterial, setSelectedMaterial] = useState<string>('');
+  const [selectedAccessories, setSelectedAccessories] = useState<Record<string, boolean>>({});
+  const [accessoryQuantities, setAccessoryQuantities] = useState<Record<string, number>>({});
 
   useEffect(() => {
     loadCabinets();
+    loadMaterials();
+    loadAccessories();
   }, []);
 
   const loadCabinets = () => {
@@ -57,6 +68,39 @@ const CabinetItems: React.FC = () => {
         variant: 'destructive'
       });
       setLoading(false);
+    }
+  };
+
+  const loadMaterials = () => {
+    try {
+      const materialsData = getAll<MaterialItem>(StorageKeys.MATERIALS) || [];
+      setMaterials(materialsData);
+      if (materialsData.length > 0 && !selectedMaterial) {
+        setSelectedMaterial(materialsData[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading materials:', error);
+    }
+  };
+
+  const loadAccessories = () => {
+    try {
+      const accessoriesData = getAll<AccessoryItem>(StorageKeys.ACCESSORIES) || [];
+      setAccessories(accessoriesData);
+      
+      // Initialize selected states for accessories
+      const initialSelected: Record<string, boolean> = {};
+      const initialQuantities: Record<string, number> = {};
+      
+      accessoriesData.forEach(acc => {
+        initialSelected[acc.id] = false;
+        initialQuantities[acc.id] = 1;
+      });
+      
+      setSelectedAccessories(initialSelected);
+      setAccessoryQuantities(initialQuantities);
+    } catch (error) {
+      console.error('Error loading accessories:', error);
     }
   };
 
@@ -100,6 +144,58 @@ const CabinetItems: React.FC = () => {
         });
       }
     }
+    
+    // Recalculate the price
+    if (isEditDialogOpen && editingCabinet) {
+      calculateCabinetPrice(editingCabinet);
+    } else {
+      calculateCabinetPrice(newCabinet as Cabinet);
+    }
+  };
+
+  const calculateCabinetPrice = (cabinet: Cabinet): number => {
+    // Material costs based on cabinet dimensions
+    let materialCost = 0;
+    const mainMaterial = materials.find(m => m.id === selectedMaterial);
+    
+    if (mainMaterial) {
+      // Simple calculation for example - in real app would calculate each piece
+      const { width, height, depth } = cabinet.dimensions;
+      
+      // Base: bottom, top, left, right, back
+      materialCost += calculatePieceCost(mainMaterial, { width, height: depth }, 1); // bottom
+      materialCost += calculatePieceCost(mainMaterial, { width, height: depth }, 1); // top
+      materialCost += calculatePieceCost(mainMaterial, { width: depth, height }, 2); // sides
+      materialCost += calculatePieceCost(mainMaterial, { width, height }, 1); // back
+    }
+    
+    // Accessory costs
+    const selectedAccessoriesArray = accessories
+      .filter(acc => selectedAccessories[acc.id])
+      .map(acc => ({ 
+        ...acc, 
+        quantity: accessoryQuantities[acc.id] || 1 
+      }));
+    
+    const accessoryCost = calculateAccessoryCost(selectedAccessoriesArray);
+    
+    // Total cost
+    const totalCost = materialCost + accessoryCost;
+    
+    // Set the price to the cabinet
+    if (isEditDialogOpen && editingCabinet) {
+      setEditingCabinet({
+        ...editingCabinet,
+        price: Math.round(totalCost)
+      });
+    } else {
+      setNewCabinet({
+        ...newCabinet,
+        price: Math.round(totalCost)
+      });
+    }
+    
+    return totalCost;
   };
 
   const handleCategoryChange = (value: string) => {
@@ -132,18 +228,82 @@ const CabinetItems: React.FC = () => {
     }
   };
 
+  const handleMaterialChange = (materialId: string) => {
+    setSelectedMaterial(materialId);
+    // Recalculate price after material change
+    setTimeout(() => {
+      if (isEditDialogOpen && editingCabinet) {
+        calculateCabinetPrice(editingCabinet);
+      } else if (newCabinet) {
+        calculateCabinetPrice(newCabinet as Cabinet);
+      }
+    }, 0);
+  };
+
+  const toggleAccessory = (id: string, checked: boolean) => {
+    setSelectedAccessories(prev => ({
+      ...prev,
+      [id]: checked
+    }));
+    
+    // Recalculate price after accessory toggle
+    setTimeout(() => {
+      if (isEditDialogOpen && editingCabinet) {
+        calculateCabinetPrice(editingCabinet);
+      } else if (newCabinet) {
+        calculateCabinetPrice(newCabinet as Cabinet);
+      }
+    }, 0);
+  };
+
+  const updateAccessoryQuantity = (id: string, quantity: number) => {
+    setAccessoryQuantities(prev => ({
+      ...prev,
+      [id]: quantity
+    }));
+    
+    // Recalculate price after quantity change
+    setTimeout(() => {
+      if (isEditDialogOpen && editingCabinet) {
+        calculateCabinetPrice(editingCabinet);
+      } else if (newCabinet) {
+        calculateCabinetPrice(newCabinet as Cabinet);
+      }
+    }, 0);
+  };
+
   const handleAddCabinet = () => {
     setNewCabinet({
       name: '',
       category: '',
       subcategory: '',
-      dimensions: { width: 0, height: 0, depth: 0 },
-      width: 0,
-      height: 0,
-      depth: 0,
+      dimensions: { width: 600, height: 720, depth: 560 },
+      width: 600,
+      height: 720,
+      depth: 560,
       price: 0,
-      image: null
+      image: null,
+      pieces: [],
+      accessories: []
     });
+    
+    // Set default material if available
+    if (materials.length > 0) {
+      setSelectedMaterial(materials[0].id);
+    }
+    
+    // Reset accessory selections
+    const initialSelected: Record<string, boolean> = {};
+    const initialQuantities: Record<string, number> = {};
+    
+    accessories.forEach(acc => {
+      initialSelected[acc.id] = false;
+      initialQuantities[acc.id] = 1;
+    });
+    
+    setSelectedAccessories(initialSelected);
+    setAccessoryQuantities(initialQuantities);
+    
     setIsAddDialogOpen(true);
   };
 
@@ -151,6 +311,33 @@ const CabinetItems: React.FC = () => {
     const cabinet = cabinets.find(c => c.id === id);
     if (cabinet) {
       setEditingCabinet(cabinet);
+      
+      // Set the material for the cabinet
+      if (cabinet.materials && cabinet.materials.length > 0) {
+        setSelectedMaterial(cabinet.materials[0].id);
+      } else if (materials.length > 0) {
+        setSelectedMaterial(materials[0].id);
+      }
+      
+      // Set accessory selections
+      const selected: Record<string, boolean> = {};
+      const quantities: Record<string, number> = {};
+      
+      accessories.forEach(acc => {
+        selected[acc.id] = false;
+        quantities[acc.id] = 1;
+      });
+      
+      if (cabinet.accessories && cabinet.accessories.length > 0) {
+        cabinet.accessories.forEach(acc => {
+          selected[acc.id] = true;
+          quantities[acc.id] = acc.quantity;
+        });
+      }
+      
+      setSelectedAccessories(selected);
+      setAccessoryQuantities(quantities);
+      
       setIsEditDialogOpen(true);
     }
   };
@@ -199,10 +386,28 @@ const CabinetItems: React.FC = () => {
     }
 
     try {
+      // Prepare selected accessories
+      const selectedAccessoriesArray = accessories
+        .filter(acc => selectedAccessories[acc.id])
+        .map(acc => ({ 
+          id: acc.id, 
+          name: acc.name,
+          quantity: accessoryQuantities[acc.id] || 1,
+          price: acc.price
+        }));
+      
+      // Add the selected material
+      const selectedMaterialItem = materials.find(m => m.id === selectedMaterial);
+      const materialsArray = selectedMaterialItem 
+        ? [{ id: selectedMaterialItem.id, name: selectedMaterialItem.name, quantity: 1 }] 
+        : [];
+      
       // Use our normalization helper to ensure cabinet has all required properties
       const cabinetToSave = normalizeCabinet({
         ...newCabinet,
         id: `cab_${Date.now()}`,
+        accessories: selectedAccessoriesArray,
+        materials: materialsArray
       });
 
       save(StorageKeys.CABINETS, cabinetToSave);
@@ -233,8 +438,28 @@ const CabinetItems: React.FC = () => {
     }
 
     try {
+      // Prepare selected accessories
+      const selectedAccessoriesArray = accessories
+        .filter(acc => selectedAccessories[acc.id])
+        .map(acc => ({ 
+          id: acc.id, 
+          name: acc.name,
+          quantity: accessoryQuantities[acc.id] || 1,
+          price: acc.price
+        }));
+      
+      // Add the selected material
+      const selectedMaterialItem = materials.find(m => m.id === selectedMaterial);
+      const materialsArray = selectedMaterialItem 
+        ? [{ id: selectedMaterialItem.id, name: selectedMaterialItem.name, quantity: 1 }] 
+        : [];
+      
       // Use our normalization helper to ensure cabinet has all required properties
-      const updatedCabinet = normalizeCabinet(editingCabinet);
+      const updatedCabinet = normalizeCabinet({
+        ...editingCabinet,
+        accessories: selectedAccessoriesArray,
+        materials: materialsArray
+      });
 
       update(StorageKeys.CABINETS, updatedCabinet.id, updatedCabinet);
       toast({
@@ -283,6 +508,8 @@ const CabinetItems: React.FC = () => {
                 <TableHead>Nume</TableHead>
                 <TableHead>Categorie</TableHead>
                 <TableHead>Dimensiuni (mm)</TableHead>
+                <TableHead>Material</TableHead>
+                <TableHead>Accesorii</TableHead>
                 <TableHead>Preț</TableHead>
                 <TableHead className="w-28">Acțiuni</TableHead>
               </TableRow>
@@ -290,7 +517,7 @@ const CabinetItems: React.FC = () => {
             <TableBody>
               {cabinets.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
                     Nu există corpuri de mobilier definite
                   </TableCell>
                 </TableRow>
@@ -315,6 +542,16 @@ const CabinetItems: React.FC = () => {
                     <TableCell className="font-medium">{cabinet.name}</TableCell>
                     <TableCell>{cabinet.category} / {cabinet.subcategory}</TableCell>
                     <TableCell>{cabinet.dimensions.width} x {cabinet.dimensions.height} x {cabinet.dimensions.depth}</TableCell>
+                    <TableCell>
+                      {cabinet.materials && cabinet.materials.length > 0 
+                        ? cabinet.materials.map(m => m.name).join(', ')
+                        : 'Nedefinit'}
+                    </TableCell>
+                    <TableCell>
+                      {cabinet.accessories && cabinet.accessories.length > 0 
+                        ? `${cabinet.accessories.length} accesorii` 
+                        : 'Fără accesorii'}
+                    </TableCell>
                     <TableCell>{cabinet.price} RON</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
@@ -344,7 +581,7 @@ const CabinetItems: React.FC = () => {
 
       {/* Dialog pentru adăugare corp nou */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Adaugă Corp Mobilier</DialogTitle>
             <DialogDescription>
@@ -413,8 +650,69 @@ const CabinetItems: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="price">Preț (RON)</Label>
+            
+            {/* Material selection */}
+            <div className="grid gap-2 mt-2">
+              <Label>Material</Label>
+              <Select
+                value={selectedMaterial}
+                onValueChange={handleMaterialChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Alege material" />
+                </SelectTrigger>
+                <SelectContent>
+                  {materials.map((material) => (
+                    <SelectItem key={material.id} value={material.id}>
+                      {material.name} ({material.price} RON/m²)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Accessories selection */}
+            <div className="grid gap-2 mt-2">
+              <Label>Accesorii</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border rounded-md p-4">
+                {accessories.length === 0 ? (
+                  <div className="col-span-2 text-center text-muted-foreground py-4">
+                    Nu există accesorii definite
+                  </div>
+                ) : (
+                  accessories.map((accessory) => (
+                    <div key={accessory.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`acc-${accessory.id}`}
+                        checked={selectedAccessories[accessory.id] || false}
+                        onCheckedChange={(checked) => toggleAccessory(accessory.id, !!checked)}
+                      />
+                      <div className="flex-1">
+                        <Label htmlFor={`acc-${accessory.id}`} className="cursor-pointer">
+                          {accessory.name} ({accessory.price} RON)
+                        </Label>
+                      </div>
+                      {selectedAccessories[accessory.id] && (
+                        <div className="flex items-center">
+                          <Label htmlFor={`qty-${accessory.id}`} className="mr-2">Cant:</Label>
+                          <Input
+                            id={`qty-${accessory.id}`}
+                            type="number"
+                            min="1"
+                            className="w-16"
+                            value={accessoryQuantities[accessory.id] || 1}
+                            onChange={(e) => updateAccessoryQuantity(accessory.id, parseInt(e.target.value))}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            
+            <div className="grid gap-2 mt-4">
+              <Label htmlFor="price">Preț calculat (RON)</Label>
               <Input
                 id="price"
                 name="price"
@@ -435,7 +733,7 @@ const CabinetItems: React.FC = () => {
 
       {/* Dialog pentru editare corp */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editează Corp Mobilier</DialogTitle>
             <DialogDescription>
@@ -505,8 +803,69 @@ const CabinetItems: React.FC = () => {
                   />
                 </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-price">Preț (RON)</Label>
+              
+              {/* Material selection */}
+              <div className="grid gap-2 mt-2">
+                <Label>Material</Label>
+                <Select
+                  value={selectedMaterial}
+                  onValueChange={handleMaterialChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Alege material" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {materials.map((material) => (
+                      <SelectItem key={material.id} value={material.id}>
+                        {material.name} ({material.price} RON/m²)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Accessories selection */}
+              <div className="grid gap-2 mt-2">
+                <Label>Accesorii</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border rounded-md p-4">
+                  {accessories.length === 0 ? (
+                    <div className="col-span-2 text-center text-muted-foreground py-4">
+                      Nu există accesorii definite
+                    </div>
+                  ) : (
+                    accessories.map((accessory) => (
+                      <div key={accessory.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`edit-acc-${accessory.id}`}
+                          checked={selectedAccessories[accessory.id] || false}
+                          onCheckedChange={(checked) => toggleAccessory(accessory.id, !!checked)}
+                        />
+                        <div className="flex-1">
+                          <Label htmlFor={`edit-acc-${accessory.id}`} className="cursor-pointer">
+                            {accessory.name} ({accessory.price} RON)
+                          </Label>
+                        </div>
+                        {selectedAccessories[accessory.id] && (
+                          <div className="flex items-center">
+                            <Label htmlFor={`edit-qty-${accessory.id}`} className="mr-2">Cant:</Label>
+                            <Input
+                              id={`edit-qty-${accessory.id}`}
+                              type="number"
+                              min="1"
+                              className="w-16"
+                              value={accessoryQuantities[accessory.id] || 1}
+                              onChange={(e) => updateAccessoryQuantity(accessory.id, parseInt(e.target.value))}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid gap-2 mt-4">
+                <Label htmlFor="edit-price">Preț calculat (RON)</Label>
                 <Input
                   id="edit-price"
                   name="price"
