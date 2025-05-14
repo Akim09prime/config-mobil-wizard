@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -167,6 +168,41 @@ function toast({ ...props }: Toast) {
     update,
   }
 }
+
+// Add variant helper methods to toast
+toast.success = (description: string, options?: Omit<Toast, "description" | "variant">) => {
+  return toast({
+    variant: "default",
+    title: "Success",
+    description,
+    ...options,
+  });
+};
+
+toast.error = (description: string, options?: Omit<Toast, "description" | "variant">) => {
+  return toast({
+    variant: "destructive",
+    title: "Error",
+    description,
+    ...options,
+  });
+};
+
+toast.warning = (description: string, options?: Omit<Toast, "description" | "variant">) => {
+  return toast({
+    title: "Warning",
+    description,
+    ...options,
+  });
+};
+
+toast.info = (description: string, options?: Omit<Toast, "description" | "variant">) => {
+  return toast({
+    title: "Info",
+    description,
+    ...options,
+  });
+};
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
