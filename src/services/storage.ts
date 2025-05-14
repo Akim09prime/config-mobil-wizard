@@ -306,3 +306,13 @@ export const updateTaxonomies = (updates: any): any => {
     throw error;
   }
 };
+
+// Get projects
+export const getProjects = async (): Promise<any[]> => {
+  try {
+    return Promise.resolve(getAll(StorageKeys.PROJECTS));
+  } catch (error) {
+    console.error('Error getting projects:', error);
+    return Promise.resolve([]);
+  }
+};

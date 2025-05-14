@@ -7,10 +7,8 @@ import { ToastProvider } from '@/hooks/use-toast'
 import { Toaster } from '@/components/ui/toaster'
 
 createRoot(document.getElementById("root")!).render(
-  <AuthProvider>
-    <ToastProvider>
-      <App />
-      <Toaster />
-    </ToastProvider>
-  </AuthProvider>
+  <ToastProvider>
+    <App />
+    <Toaster />
+  </ToastProvider>
 );
