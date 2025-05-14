@@ -32,5 +32,11 @@ interface Cabinet {
     quantity: number;
     price: number;
   }[];
+  materials?: {
+    id: string;
+    name: string;
+    quantity: number;
+    price?: number;
+  }[];
   totalCost?: number;
 }
