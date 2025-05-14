@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { normalizeCabinet } from '@/utils/cabinetHelpers';
+import { TaxonomySelect, SubcategorySelect } from '@/components/TaxonomySelect';
 
 // Cabinet interface is now defined in vite-env.d.ts globally
 
@@ -98,6 +99,36 @@ const CabinetItems: React.FC = () => {
           [name]: name === 'price' ? parseFloat(value) : value
         });
       }
+    }
+  };
+
+  const handleCategoryChange = (value: string) => {
+    if (isEditDialogOpen && editingCabinet) {
+      setEditingCabinet({
+        ...editingCabinet,
+        category: value,
+        subcategory: '' // Reset subcategory when category changes
+      });
+    } else {
+      setNewCabinet({
+        ...newCabinet,
+        category: value,
+        subcategory: '' // Reset subcategory when category changes
+      });
+    }
+  };
+
+  const handleSubcategoryChange = (value: string) => {
+    if (isEditDialogOpen && editingCabinet) {
+      setEditingCabinet({
+        ...editingCabinet,
+        subcategory: value
+      });
+    } else {
+      setNewCabinet({
+        ...newCabinet,
+        subcategory: value
+      });
     }
   };
 
@@ -332,20 +363,22 @@ const CabinetItems: React.FC = () => {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="category">Categorie</Label>
-              <Input
-                id="category"
-                name="category"
-                value={newCabinet.category}
-                onChange={handleInputChange}
+              <TaxonomySelect
+                type="categories"
+                value={newCabinet.category || ''}
+                onChange={handleCategoryChange}
+                placeholder="Selectează categoria"
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="subcategory">Subcategorie</Label>
-              <Input
-                id="subcategory"
-                name="subcategory"
-                value={newCabinet.subcategory}
-                onChange={handleInputChange}
+              <SubcategorySelect
+                type="categories"
+                categoryName={newCabinet.category || ''}
+                value={newCabinet.subcategory || ''}
+                onChange={handleSubcategoryChange}
+                placeholder="Selectează subcategoria"
+                disabled={!newCabinet.category}
               />
             </div>
             <div className="grid grid-cols-3 gap-4">
@@ -422,20 +455,22 @@ const CabinetItems: React.FC = () => {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit-category">Categorie</Label>
-                <Input
-                  id="edit-category"
-                  name="category"
+                <TaxonomySelect
+                  type="categories"
                   value={editingCabinet.category}
-                  onChange={handleInputChange}
+                  onChange={handleCategoryChange}
+                  placeholder="Selectează categoria"
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit-subcategory">Subcategorie</Label>
-                <Input
-                  id="edit-subcategory"
-                  name="subcategory"
-                  value={editingCabinet.subcategory}
-                  onChange={handleInputChange}
+                <SubcategorySelect
+                  type="categories"
+                  categoryName={editingCabinet.category}
+                  value={editingCabinet.subcategory || ''}
+                  onChange={handleSubcategoryChange}
+                  placeholder="Selectează subcategoria"
+                  disabled={!editingCabinet.category}
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">

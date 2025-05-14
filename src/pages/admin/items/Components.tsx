@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StorageKeys, getAll, save, update, remove } from '@/services/storage';
@@ -10,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { TaxonomySelect } from '@/components/TaxonomySelect';
 
 interface Component {
   id: string;
@@ -64,6 +64,20 @@ const ComponentItems: React.FC = () => {
       setNewComponent({
         ...newComponent,
         [name]: name === 'price' || name === 'stock' ? parseFloat(value) : value
+      });
+    }
+  };
+
+  const handleCategoryChange = (value: string) => {
+    if (isEditDialogOpen && editingComponent) {
+      setEditingComponent({
+        ...editingComponent,
+        category: value
+      });
+    } else {
+      setNewComponent({
+        ...newComponent,
+        category: value
       });
     }
   };
@@ -274,11 +288,11 @@ const ComponentItems: React.FC = () => {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="category">Categorie</Label>
-              <Input
-                id="category"
-                name="category"
-                value={newComponent.category}
-                onChange={handleInputChange}
+              <TaxonomySelect
+                type="componentCategories"
+                value={newComponent.category || ''}
+                onChange={handleCategoryChange}
+                placeholder="Selectează categoria"
               />
             </div>
             <div className="grid gap-2">
@@ -333,11 +347,11 @@ const ComponentItems: React.FC = () => {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit-category">Categorie</Label>
-                <Input
-                  id="edit-category"
-                  name="category"
+                <TaxonomySelect
+                  type="componentCategories"
                   value={editingComponent.category}
-                  onChange={handleInputChange}
+                  onChange={handleCategoryChange}
+                  placeholder="Selectează categoria"
                 />
               </div>
               <div className="grid gap-2">
