@@ -1,4 +1,3 @@
-
 // Storage service for managing data persistence
 
 // Generic interface for all storable items
@@ -176,17 +175,22 @@ export const getById = <T extends StorableItem>(key: StorageKeys, id: string): T
   }
 };
 
-// Create a new item
-export const create = <T extends StorableItem>(key: StorageKeys, item: T): T => {
+// Save or create a new item
+export const save = <T extends StorableItem>(key: StorageKeys, item: T): T => {
   try {
     const items = getAll<T>(key);
     const updatedItems = [...items, item];
     localStorage.setItem(key, JSON.stringify(updatedItems));
     return item;
   } catch (error) {
-    console.error(`Error creating item in ${key}:`, error);
-    throw new Error(`Failed to create item in ${key}`);
+    console.error(`Error saving item in ${key}:`, error);
+    throw new Error(`Failed to save item in ${key}`);
   }
+};
+
+// Create a new item (keeping this for backward compatibility)
+export const create = <T extends StorableItem>(key: StorageKeys, item: T): T => {
+  return save(key, item);
 };
 
 // Update an existing item
