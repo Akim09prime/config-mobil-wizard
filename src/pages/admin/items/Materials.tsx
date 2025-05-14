@@ -13,6 +13,7 @@ interface Material {
   id: string;
   name: string;
   category: string;
+  subcategory?: string;
   price: number;
   thickness: number;
   dimensions: {
@@ -120,6 +121,7 @@ const MaterialItems: React.FC = () => {
               <TableRow>
                 <TableHead>Nume</TableHead>
                 <TableHead>Categorie</TableHead>
+                <TableHead>Subcategorie</TableHead>
                 <TableHead>Grosime (mm)</TableHead>
                 <TableHead>Dimensiuni (mm)</TableHead>
                 <TableHead>Preț / m²</TableHead>
@@ -129,7 +131,7 @@ const MaterialItems: React.FC = () => {
             <TableBody>
               {materials.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                     Nu există materiale definite
                   </TableCell>
                 </TableRow>
@@ -138,6 +140,7 @@ const MaterialItems: React.FC = () => {
                   <TableRow key={material.id}>
                     <TableCell className="font-medium">{material.name}</TableCell>
                     <TableCell>{material.category}</TableCell>
+                    <TableCell>{material.subcategory || '-'}</TableCell>
                     <TableCell>{material.thickness}</TableCell>
                     <TableCell>{material.dimensions.width} x {material.dimensions.height}</TableCell>
                     <TableCell>{material.price} RON</TableCell>

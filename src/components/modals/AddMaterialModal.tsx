@@ -17,12 +17,19 @@ interface AddMaterialModalProps {
 interface MaterialType {
   id: string;
   name: string;
+  subcategories: MaterialSubcategory[];
+}
+
+interface MaterialSubcategory {
+  id: string;
+  name: string;
 }
 
 interface Material {
   id: string;
   name: string;
   category: string;
+  subcategory: string;
   price: number;
   thickness: number;
   dimensions: {
@@ -34,11 +41,13 @@ interface Material {
 const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ open, onClose, onMaterialAdded }) => {
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  const [subcategoryId, setSubcategoryId] = useState('');
   const [price, setPrice] = useState('');
   const [thickness, setThickness] = useState('');
   const [width, setWidth] = useState('');
   const [height, setHeight] = useState('');
   const [materialTypes, setMaterialTypes] = useState<MaterialType[]>([]);
+  const [subcategories, setSubcategories] = useState<MaterialSubcategory[]>([]);
 
   useEffect(() => {
     const taxonomiesData = getTaxonomies();
@@ -46,6 +55,21 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ open, onClose, onMa
       setMaterialTypes(taxonomiesData.materialTypes);
     }
   }, [open]);
+
+  useEffect(() => {
+    // Update subcategories when category changes
+    if (categoryId) {
+      const selectedType = materialTypes.find(type => type.id === categoryId);
+      if (selectedType && selectedType.subcategories) {
+        setSubcategories(selectedType.subcategories);
+        setSubcategoryId(''); // Reset subcategory when category changes
+      } else {
+        setSubcategories([]);
+      }
+    } else {
+      setSubcategories([]);
+    }
+  }, [categoryId, materialTypes]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,11 +85,14 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ open, onClose, onMa
 
     try {
       const selectedType = materialTypes.find(type => type.id === categoryId);
+      const selectedSubcategory = subcategoryId ? 
+        subcategories.find(subcat => subcat.id === subcategoryId) : null;
       
       const newMaterial: Material = {
         id: `mat_${Date.now()}`,
         name: name.trim(),
         category: selectedType ? selectedType.name : '',
+        subcategory: selectedSubcategory ? selectedSubcategory.name : '',
         price: parseFloat(price),
         thickness: parseFloat(thickness),
         dimensions: {
@@ -120,6 +147,26 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ open, onClose, onMa
                 {materialTypes.map((type) => (
                   <SelectItem key={type.id} value={type.id}>
                     {type.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="subcategory">Subcategorie</Label>
+            <Select 
+              value={subcategoryId} 
+              onValueChange={setSubcategoryId}
+              disabled={subcategories.length === 0}
+            >
+              <SelectTrigger id="subcategory">
+                <SelectValue placeholder={subcategories.length === 0 ? "Nu există subcategorii" : "Selectați subcategoria"} />
+              </SelectTrigger>
+              <SelectContent>
+                {subcategories.map((subcategory) => (
+                  <SelectItem key={subcategory.id} value={subcategory.id}>
+                    {subcategory.name}
                   </SelectItem>
                 ))}
               </SelectContent>
