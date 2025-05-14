@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { StorageKeys, update, getAll } from '@/services/storage';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast';
 import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
 import CabinetWrapper from '@/components/cabinet/CabinetWrapper';
 import { normalizeCabinet } from '@/utils/cabinetHelpers';

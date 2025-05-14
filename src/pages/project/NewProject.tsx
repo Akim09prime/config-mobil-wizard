@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import CabinetWrapper from '@/components/cabinet/CabinetWrapper';
 import { getFurniturePresets } from '@/services/storage';
 import { generateQuotePDF } from '@/services/pdf';
-import { toast } from '@/hooks/use-toast'; // Import toast directly instead of useToast
+import { toast } from '@/components/ui/toast'; // Updated import path
 import {
   calculateProjectMaterialTotal,
   calculateProjectAccessoryTotal,

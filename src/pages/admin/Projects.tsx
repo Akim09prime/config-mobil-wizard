@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StorageKeys, getAll, remove } from '@/services/storage';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/toast';
 import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import AddProjectModal from '@/components/modals/AddProjectModal';
