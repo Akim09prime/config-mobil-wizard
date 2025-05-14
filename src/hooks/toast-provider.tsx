@@ -14,6 +14,21 @@ function genId() {
 
 const useToastReducer = createUseReducerWithDispatch(toastReducer, initialState)
 
+export function useToast() {
+  const context = React.useContext(ToastContext)
+  
+  if (context === undefined) {
+    throw new Error("useToast must be used within a ToastProvider")
+  }
+  
+  return context
+}
+
+export function toast(props: Omit<ToasterToast, "id">) {
+  const { addToast } = useToast()
+  return addToast(props)
+}
+
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useToastReducer()
   const [firstRender, setFirstRender] = useState(true)

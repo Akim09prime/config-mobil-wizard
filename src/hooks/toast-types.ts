@@ -1,11 +1,13 @@
 
 import * as React from "react"
-import type { ToastActionElement, ToastProps } from "@/components/ui/toast"
+import type { ToastActionElement, ToastProps as UIToastProps } from "@/components/ui/toast"
 
 export const TOAST_LIMIT = 10
 export const TOAST_REMOVE_DELAY = 1000000
 
-export type ToasterToast = ToastProps & {
+export type ToastProps = Omit<ToasterToast, "id">
+
+export type ToasterToast = UIToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
