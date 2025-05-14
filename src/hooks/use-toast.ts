@@ -178,11 +178,11 @@ toast.error = (description: string) => {
 };
 
 toast.warning = (description: string) => {
-  return toast({ description, variant: "warning" });
+  return toast({ description, variant: "default" });
 };
 
 toast.info = (description: string) => {
-  return toast({ description, variant: "info" });
+  return toast({ description, variant: "default" });
 };
 
 function useToast() {
