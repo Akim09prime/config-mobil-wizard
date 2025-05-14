@@ -34,7 +34,15 @@ const Register: React.FC = () => {
     try {
       await register(name, email, password, role);
       toast.success('Înregistrare reușită');
-      navigate('/');
+      
+      // Redirect based on role
+      if (role === 'administrator') {
+        navigate('/admin/dashboard');
+      } else if (role === 'proiectant') {
+        navigate('/project/new');
+      } else {
+        navigate('/catalog');
+      }
     } catch (err) {
       console.error('Registration error:', err);
     }

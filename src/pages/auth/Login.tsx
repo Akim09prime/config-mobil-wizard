@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, loading, error } = useAuth();
+  const { login, loading, error, user } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,7 +21,15 @@ const Login: React.FC = () => {
     try {
       await login(email, password);
       toast.success('Autentificare reușită');
-      navigate('/');
+      
+      // Redirect based on role
+      if (email.startsWith('admin')) {
+        navigate('/admin/dashboard');
+      } else if (email.startsWith('proiectant')) {
+        navigate('/project/new');
+      } else {
+        navigate('/catalog');
+      }
     } catch (err) {
       console.error('Login error:', err);
     }
