@@ -19,7 +19,7 @@ import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Separator } from '../../components/ui/separator';
 import { toast } from 'sonner';
 import { MaterialItem, AccessoryItem, calculatePieceCost, calculateHingeCost, calculateAccessoryCost } from '../../services/calculations';
-import { getAll, StorageKeys } from '../../services/storage';
+import { getAll, StorageKeys, getTaxonomies } from '../../services/storage';
 
 export interface Cabinet {
   id?: string;
@@ -57,6 +57,26 @@ interface CabinetConfiguratorProps {
   maxWidth?: number;
 }
 
+// Define an interface for the taxonomies structure
+interface Taxonomy {
+  categories: {
+    id: string;
+    name: string;
+    subcategories: {
+      id: string;
+      name: string;
+    }[];
+  }[];
+  materialTypes: {
+    id: string;
+    name: string;
+  }[];
+  accessoryCategories: {
+    id: string;
+    name: string;
+  }[];
+}
+
 const defaultCabinet: Cabinet = {
   name: 'Corp nou',
   category: '',
@@ -84,7 +104,7 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
   });
   const [materials, setMaterials] = useState<MaterialItem[]>([]);
   const [accessories, setAccessories] = useState<AccessoryItem[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Taxonomy['categories']>([]);
   const [selectedMaterial, setSelectedMaterial] = useState<string>('');
   const [selectedAccessories, setSelectedAccessories] = useState<Record<string, boolean>>({});
   const [accessoryQuantities, setAccessoryQuantities] = useState<Record<string, number>>({});
@@ -96,7 +116,7 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
     const loadData = () => {
       const materialsData = getAll<MaterialItem>(StorageKeys.MATERIALS);
       const accessoriesData = getAll<AccessoryItem>(StorageKeys.ACCESSORIES);
-      const taxonomies = getAll<any>(StorageKeys.TAXONOMIES);
+      const taxonomiesData = getTaxonomies();
       
       if (materialsData?.length > 0) {
         setMaterials(materialsData);
@@ -133,8 +153,8 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
         }
       }
       
-      if (taxonomies?.categories?.length > 0) {
-        setCategories(taxonomies.categories);
+      if (taxonomiesData?.categories?.length > 0) {
+        setCategories(taxonomiesData.categories);
       }
     };
     
@@ -323,7 +343,7 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
                 <SelectContent>
                   {cabinet.category && categories
                     .find(cat => cat.id === cabinet.category)?.subcategories
-                    .map((subcat: any) => (
+                    .map((subcat) => (
                       <SelectItem key={subcat.id} value={subcat.id}>
                         {subcat.name}
                       </SelectItem>
