@@ -1,4 +1,3 @@
-
 // Calculation service for furniture costs
 
 export interface Dimensions {
@@ -99,6 +98,50 @@ export const calculateAccessoryCost = (
   
   return accessories.reduce((total, accessory) => {
     return total + (accessory.price * accessory.quantity);
+  }, 0);
+};
+
+// Calculate the total material cost of all cabinets in a project
+export const calculateProjectMaterialTotal = (cabinets: any[]): number => {
+  if (!cabinets || !cabinets.length) {
+    return 0;
+  }
+  
+  // Sum up material costs from all cabinets
+  return cabinets.reduce((total, cabinet) => {
+    // If the cabinet already has a calculated materialCost property, use that
+    if (cabinet.materialCost !== undefined) {
+      return total + cabinet.materialCost;
+    }
+    
+    // Otherwise, if it has pieces, calculate from them
+    if (cabinet.pieces && cabinet.pieces.length) {
+      return total + calculateCabinetPieceCosts(cabinet.pieces);
+    }
+    
+    return total;
+  }, 0);
+};
+
+// Calculate the total accessory cost of all cabinets in a project
+export const calculateProjectAccessoryTotal = (cabinets: any[]): number => {
+  if (!cabinets || !cabinets.length) {
+    return 0;
+  }
+  
+  // Sum up accessory costs from all cabinets
+  return cabinets.reduce((total, cabinet) => {
+    // If the cabinet already has a calculated accessoryCost property, use that
+    if (cabinet.accessoryCost !== undefined) {
+      return total + cabinet.accessoryCost;
+    }
+    
+    // Otherwise, if it has accessories, calculate from them
+    if (cabinet.accessories && cabinet.accessories.length) {
+      return total + calculateAccessoryCost(cabinet.accessories);
+    }
+    
+    return total;
   }, 0);
 };
 
