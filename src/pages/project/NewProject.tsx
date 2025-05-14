@@ -50,9 +50,18 @@ const NewProject: React.FC = () => {
   const [accessoryTotal, setAccessoryTotal] = useState(0);
 
   useEffect(() => {
-    // Get presets synchronously to avoid Promise type issues
-    const presets = getFurniturePresets();
-    setFurniturePresets(presets);
+    // Fix: Handle the promise correctly
+    const loadPresets = async () => {
+      try {
+        const presets = await getFurniturePresets();
+        setFurniturePresets(presets);
+      } catch (error) {
+        console.error("Error loading presets:", error);
+        setFurniturePresets([]);
+      }
+    };
+    
+    loadPresets();
   }, []);
 
   useEffect(() => {
