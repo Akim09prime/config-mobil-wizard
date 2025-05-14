@@ -10,6 +10,7 @@ interface CabinetWrapperProps {
   onCancel?: () => void;
   initialCabinet?: Partial<Cabinet>;
   maxWidth?: number;
+  projectId?: string;
 }
 
 /**
@@ -22,7 +23,8 @@ const CabinetWrapper: React.FC<CabinetWrapperProps> = ({
   onSave,
   onCancel,
   initialCabinet = {},
-  maxWidth
+  maxWidth,
+  projectId
 }) => {
   // Add debugging log to verify the open prop value
   console.log('🔧 CabinetWrapper open:', open);
@@ -36,7 +38,8 @@ const CabinetWrapper: React.FC<CabinetWrapperProps> = ({
   const normalizedInitialCabinet = initialCabinet ? normalizeCabinet(initialCabinet) : undefined;
   
   // Wrap the onSave callback to normalize the cabinet before passing it up
-  const handleSave = (cabinet: any) => {
+  const handleSave = (cabinet: Cabinet) => {
+    console.log('🔧 CabinetWrapper handleSave called with cabinet:', cabinet);
     const normalizedCabinet = normalizeCabinet(cabinet);
     onSave(normalizedCabinet);
   };
@@ -49,6 +52,7 @@ const CabinetWrapper: React.FC<CabinetWrapperProps> = ({
       onCancel={onCancel}
       initialCabinet={normalizedInitialCabinet}
       maxWidth={maxWidth}
+      projectId={projectId}
     />
   );
 };

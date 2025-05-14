@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StorageKeys, update, getById } from '@/services/storage';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 
 interface EditProjectModalProps {
   open: boolean;
@@ -19,6 +19,7 @@ interface EditProjectModalProps {
     date: string;
     status: 'draft' | 'active' | 'completed' | 'cancelled';
     total: number;
+    cabinets?: Cabinet[];
   } | null;
 }
 
@@ -41,7 +42,11 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onPr
     e.preventDefault();
     
     if (!project || !name || !client) {
-      toast.error('Numele proiectului și clientul sunt obligatorii');
+      toast({
+        title: "Eroare",
+        description: "Numele proiectului și clientul sunt obligatorii",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -50,18 +55,26 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onPr
         name: name.trim(),
         client: client.trim(),
         status: status,
-        total: parseFloat(total) || 0
+        total: parseFloat(total) || 0,
+        cabinets: project.cabinets || []
       };
 
       update(StorageKeys.PROJECTS, project.id, updatedProject);
       
-      toast.success('Proiectul a fost actualizat cu succes');
+      toast({
+        title: "Succes",
+        description: "Proiectul a fost actualizat cu succes"
+      });
       
       onProjectUpdated();
       onClose();
     } catch (error) {
       console.error('Error updating project:', error);
-      toast.error('Nu s-a putut actualiza proiectul');
+      toast({
+        title: "Eroare",
+        description: "Nu s-a putut actualiza proiectul",
+        variant: "destructive"
+      });
     }
   };
 

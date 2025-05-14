@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StorageKeys, getAll, remove } from '@/services/storage';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import AddProjectModal from '@/components/modals/AddProjectModal';
@@ -41,9 +41,10 @@ const Projects: React.FC = () => {
       setLoading(false);
     } catch (error) {
       console.error('Error loading projects:', error);
-      toast.error({
+      toast({
         title: 'Eroare',
         description: 'Nu s-au putut încărca proiectele',
+        variant: 'destructive'
       });
       setLoading(false);
     }
@@ -59,9 +60,10 @@ const Projects: React.FC = () => {
       setProjectToEdit(project);
       setIsEditModalOpen(true);
     } else {
-      toast.error({
+      toast({
         title: 'Eroare',
         description: 'Proiectul nu a fost găsit',
+        variant: 'destructive'
       });
     }
   };
@@ -75,22 +77,24 @@ const Projects: React.FC = () => {
       try {
         const success = remove(StorageKeys.PROJECTS, projectToDelete);
         if (success) {
-          toast.success({
+          toast({
             title: 'Succes',
             description: 'Proiectul a fost șters cu succes'
           });
           loadProjects();
         } else {
-          toast.error({
+          toast({
             title: 'Eroare',
             description: 'Nu s-a putut șterge proiectul',
+            variant: 'destructive'
           });
         }
       } catch (error) {
         console.error('Error deleting project:', error);
-        toast.error({
+        toast({
           title: 'Eroare',
           description: 'Nu s-a putut șterge proiectul',
+          variant: 'destructive'
         });
       }
       setProjectToDelete(null);
