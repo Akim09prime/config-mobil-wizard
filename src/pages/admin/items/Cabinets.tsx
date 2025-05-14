@@ -12,7 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
-interface Cabinet {
+// Updated the Cabinet interface to be compatible with the one in CabinetConfigurator
+export interface Cabinet {
   id: string;
   name: string;
   category: string;
@@ -24,6 +25,10 @@ interface Cabinet {
   };
   price: number;
   image: string | null;
+  // Adding these properties to match the expected type in NewProject.tsx
+  width?: number;
+  height?: number;
+  depth?: number;
 }
 
 const CabinetItems: React.FC = () => {
@@ -49,7 +54,14 @@ const CabinetItems: React.FC = () => {
   const loadCabinets = () => {
     try {
       const cabinetsData = getAll<Cabinet>(StorageKeys.CABINETS) || [];
-      setCabinets(cabinetsData);
+      // Update cabinets to include width, height and depth from dimensions
+      const updatedCabinets = cabinetsData.map(cabinet => ({
+        ...cabinet,
+        width: cabinet.dimensions.width,
+        height: cabinet.dimensions.height,
+        depth: cabinet.dimensions.depth
+      }));
+      setCabinets(updatedCabinets);
       setLoading(false);
     } catch (error) {
       console.error('Error loading cabinets:', error);
@@ -68,12 +80,14 @@ const CabinetItems: React.FC = () => {
     if (isEditDialogOpen && editingCabinet) {
       if (name.startsWith('dimension_')) {
         const dimension = name.split('_')[1] as 'width' | 'height' | 'depth';
+        const dimensionValue = parseFloat(value);
         setEditingCabinet({
           ...editingCabinet,
           dimensions: {
             ...editingCabinet.dimensions,
-            [dimension]: parseFloat(value)
-          }
+            [dimension]: dimensionValue
+          },
+          [dimension]: dimensionValue // Update the direct property as well
         });
       } else {
         setEditingCabinet({
@@ -84,12 +98,14 @@ const CabinetItems: React.FC = () => {
     } else {
       if (name.startsWith('dimension_')) {
         const dimension = name.split('_')[1] as 'width' | 'height' | 'depth';
+        const dimensionValue = parseFloat(value);
         setNewCabinet({
           ...newCabinet,
           dimensions: {
             ...newCabinet.dimensions!,
-            [dimension]: parseFloat(value)
-          }
+            [dimension]: dimensionValue
+          },
+          [dimension]: dimensionValue // Update the direct property as well
         });
       } else {
         setNewCabinet({
@@ -106,6 +122,9 @@ const CabinetItems: React.FC = () => {
       category: '',
       subcategory: '',
       dimensions: { width: 0, height: 0, depth: 0 },
+      width: 0,
+      height: 0,
+      depth: 0,
       price: 0,
       image: null
     });
@@ -164,10 +183,23 @@ const CabinetItems: React.FC = () => {
     }
 
     try {
-      const cabinetToSave = {
+      const cabinetToSave: Cabinet = {
         ...newCabinet,
-        id: `cab_${Date.now()}`
-      } as Cabinet;
+        id: `cab_${Date.now()}`,
+        dimensions: {
+          width: newCabinet.dimensions?.width || 0,
+          height: newCabinet.dimensions?.height || 0,
+          depth: newCabinet.dimensions?.depth || 0
+        },
+        width: newCabinet.dimensions?.width || 0,
+        height: newCabinet.dimensions?.height || 0,
+        depth: newCabinet.dimensions?.depth || 0,
+        image: newCabinet.image || null,
+        price: newCabinet.price || 0,
+        name: newCabinet.name || '',
+        category: newCabinet.category || '',
+        subcategory: newCabinet.subcategory || ''
+      };
 
       save(StorageKeys.CABINETS, cabinetToSave);
       toast({
@@ -197,7 +229,15 @@ const CabinetItems: React.FC = () => {
     }
 
     try {
-      update(StorageKeys.CABINETS, editingCabinet.id, editingCabinet);
+      // Make sure the cabinet has the width, height, and depth properties set
+      const updatedCabinet: Cabinet = {
+        ...editingCabinet,
+        width: editingCabinet.dimensions.width,
+        height: editingCabinet.dimensions.height,
+        depth: editingCabinet.dimensions.depth
+      };
+
+      update(StorageKeys.CABINETS, updatedCabinet.id, updatedCabinet);
       toast({
         title: 'Succes',
         description: 'Corpul de mobilier a fost actualizat cu succes'
