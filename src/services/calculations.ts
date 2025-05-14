@@ -35,6 +35,17 @@ export interface PieceConfig {
   quantity?: number;
 }
 
+export interface ProjectTotalResult {
+  materialCost: number;
+  accessoryCost: number;
+  manoperaCost: number;
+  transportCost: number;
+  adaosCost: number;
+  tvaCost: number;
+  subtotal: number;
+  total: number;
+}
+
 // Calculate the cost of a single piece of material based on dimensions
 export const calculatePieceCost = (
   material: MaterialItem,
@@ -151,16 +162,7 @@ export const calculateProjectTotal = (
   accessoryCost: number,
   pricingSettings: PricingSettings,
   includeTVA: boolean = true
-): { 
-  materialCost: number;
-  accessoryCost: number;
-  manoperaCost: number;
-  transportCost: number;
-  adaosCost: number;
-  tvaCost: number;
-  subtotal: number;
-  total: number;
-} => {
+): ProjectTotalResult => {
   // Base cost of materials and accessories
   const baseCost = rawMaterialCost + accessoryCost;
   

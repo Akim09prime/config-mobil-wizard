@@ -145,6 +145,17 @@ const defaultData = {
   [StorageKeys.PROJECTS]: []
 };
 
+// Get furniture presets for project
+export const getFurniturePresets = () => {
+  try {
+    // For now, just return cabinets as presets
+    return getAll(StorageKeys.CABINETS);
+  } catch (error) {
+    console.error('Error getting furniture presets:', error);
+    return [];
+  }
+};
+
 // Get all items of a specific type
 export const getAll = <T extends StorableItem>(key: StorageKeys): T[] => {
   try {

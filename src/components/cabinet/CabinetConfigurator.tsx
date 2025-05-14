@@ -55,6 +55,7 @@ interface CabinetConfiguratorProps {
   open: boolean;
   onClose: () => void;
   onSave: (cabinet: Cabinet) => void;
+  onCancel?: () => void; // Added this prop
   initialCabinet?: Partial<Cabinet>;
   maxWidth?: number;
 }
@@ -97,6 +98,7 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
   open,
   onClose,
   onSave,
+  onCancel,
   initialCabinet = {},
   maxWidth
 }) => {
@@ -294,6 +296,15 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
       description: "Corp salvat cu succes"
     });
     onClose();
+  };
+
+  // Handle cancel
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    } else {
+      onClose();
+    }
   };
 
   return (
@@ -550,7 +561,7 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Anulează</Button>
+          <Button variant="outline" onClick={handleCancel}>Anulează</Button>
           <Button onClick={handleSave}>Salvează Corp</Button>
         </DialogFooter>
       </DialogContent>
