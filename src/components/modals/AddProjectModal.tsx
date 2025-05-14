@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -33,11 +32,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose, onProj
     e.preventDefault();
     
     if (!name || !client) {
-      toast({
-        title: 'Eroare',
-        description: 'Numele proiectului și clientul sunt obligatorii',
-        variant: 'destructive'
-      });
+      toast.error('Numele proiectului și clientul sunt obligatorii');
       return;
     }
 
@@ -56,20 +51,13 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose, onProj
 
       create(StorageKeys.PROJECTS, newProject);
       
-      toast({
-        title: 'Succes',
-        description: 'Proiectul a fost adăugat cu succes'
-      });
+      toast.success('Proiectul a fost adăugat cu succes');
       
       onProjectAdded();
       onClose();
     } catch (error) {
       console.error('Error adding project:', error);
-      toast({
-        title: 'Eroare',
-        description: 'Nu s-a putut adăuga proiectul',
-        variant: 'destructive'
-      });
+      toast.error('Nu s-a putut adăuga proiectul');
     }
   };
 

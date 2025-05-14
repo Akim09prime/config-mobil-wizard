@@ -32,11 +32,7 @@ export const TaxonomySelect: React.FC<TaxonomySelectProps> = ({
         setLoading(false);
       } catch (error) {
         console.error(`Error loading ${type}:`, error);
-        toast({
-          title: 'Eroare',
-          description: `Nu s-au putut încărca categoriile`,
-          variant: 'destructive'
-        });
+        toast.error(`Nu s-au putut încărca categoriile`);
         setLoading(false);
       }
     };
@@ -111,11 +107,7 @@ export const SubcategorySelect: React.FC<{
         setLoading(false);
       } catch (error) {
         console.error(`Error loading subcategories for ${categoryName}:`, error);
-        toast({
-          title: 'Eroare',
-          description: `Nu s-au putut încărca subcategoriile`,
-          variant: 'destructive'
-        });
+        toast.error(`Nu s-au putut încărca subcategoriile`);
         setLoading(false);
       }
     };

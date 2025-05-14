@@ -10,73 +10,75 @@ export { ToastProvider } from "./toast-provider"
 export function useToast() {
   const { addToast, ...context } = useContext(ToastContext)
 
+  // Main toast function
   const toast = React.useCallback(
-    function toast(props: Omit<ToasterToast, "id">) {
+    (props: Omit<ToasterToast, "id">) => {
       addToast(props)
     },
     [addToast]
   )
 
-  // Add simplified toast functions
-  toast.success = (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
-    addToast({
-      title: "Succes",
-      description,
-      duration: 3000,
-      ...options,
-    })
-  }
-  
-  toast.error = (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
-    addToast({
-      title: "Eroare",
-      description,
-      variant: "destructive",
-      duration: 5000,
-      ...options,
-    })
-  }
-  
-  toast.info = (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
-    addToast({
-      title: "Informație",
-      description,
-      duration: 3000,
-      ...options,
-    })
-  }
-
-  toast.warning = (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
-    addToast({
-      title: "Atenție",
-      description,
-      variant: "default",
-      duration: 4000,
-      ...options,
-    })
+  // Add helper methods to the toast function
+  const helpers = {
+    success: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
+      addToast({
+        title: "Succes",
+        description,
+        duration: 3000,
+        ...options,
+      })
+    },
+    error: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
+      addToast({
+        title: "Eroare",
+        description,
+        variant: "destructive",
+        duration: 5000,
+        ...options,
+      })
+    },
+    info: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
+      addToast({
+        title: "Informație",
+        description,
+        duration: 3000,
+        ...options,
+      })
+    },
+    warning: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
+      addToast({
+        title: "Atenție",
+        description,
+        variant: "default",
+        duration: 4000,
+        ...options,
+      })
+    }
   }
 
   return {
-    toast,
     ...context,
+    toast: Object.assign(toast, helpers)
   }
 }
 
-// Create a standalone toast object for direct usage without hooks
-export const toast = {
+// Create a standalone toast object with the helper methods
+const toastFn = (props: Omit<ToasterToast, "id">) => {
+  console.log('Toast called:', props)
+}
+
+// Add helper methods to the standalone toast
+export const toast = Object.assign(toastFn, {
   success: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
     console.log('Toast success:', description, options)
   },
-  
   error: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
     console.log('Toast error:', description, options)
   },
-  
   info: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
     console.log('Toast info:', description, options)
   },
-
   warning: (description: string, options?: Partial<Omit<ToasterToast, "id">>) => {
     console.log('Toast warning:', description, options)
   }
-}
+})
