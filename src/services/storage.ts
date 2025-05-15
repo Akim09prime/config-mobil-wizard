@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 
 export enum StorageKeys {
@@ -303,7 +302,7 @@ export function getProjects<T>(): T[] {
   return getAll<T>(StorageKeys.PROJECTS);
 }
 
-// Get furniture presets
-export function getFurniturePresets<T extends { isPreset?: boolean }>(): T[] {
-  return getAll<T>(StorageKeys.CABINETS).filter(cabinet => cabinet.isPreset === true);
+// Get furniture presets - fix to use a proper interface that matches what's needed in offer.tsx
+export function getFurniturePresets<T>(): T[] {
+  return getAll<T>(StorageKeys.CABINETS).filter(cabinet => (cabinet as any).isPreset === true);
 }
