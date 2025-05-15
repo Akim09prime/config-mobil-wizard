@@ -1,29 +1,26 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../../components/ui/dialog';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Checkbox } from '../../components/ui/checkbox';
-import { Slider } from '../../components/ui/slider';
-import { Alert, AlertDescription } from '../../components/ui/alert';
-import { Separator } from '../../components/ui/separator';
-import { RadioGroup, RadioGroupItem } from '../../components/ui/radio-group';
-import { Progress } from '../../components/ui/progress';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
-import { MaterialItem, AccessoryItem, calculatePieceCost, calculateHingeCost, calculateAccessoryCost } from '../../services/calculations';
-import { getAll, StorageKeys, getTaxonomies } from '../../services/storage';
+import { MaterialItem, AccessoryItem, calculatePieceCost, calculateHingeCost, calculateAccessoryCost } from '@/services/calculations';
+import { getAll, StorageKeys, getTaxonomies } from '@/services/storage';
 import { normalizeCabinet } from '@/utils/cabinetHelpers';
 
-// Using the global Cabinet interface defined in vite-env.d.ts
+// Import sub-components
+import CabinetConfiguratorHeader from './configurator/CabinetConfiguratorHeader';
+import ErrorDisplay from './configurator/ErrorDisplay';
+import BasicInfoForm from './configurator/BasicInfoForm';
+import DimensionsTab from './configurator/DimensionsTab';
+import MaterialsTab from './configurator/MaterialsTab';
+import AccessoriesTab from './configurator/AccessoriesTab';
+import CostSummary from './configurator/CostSummary';
 
 interface CabinetConfiguratorProps {
   open: boolean;
@@ -32,7 +29,7 @@ interface CabinetConfiguratorProps {
   onCancel?: () => void; 
   initialCabinet?: Partial<Cabinet>;
   maxWidth?: number;
-  projectId?: string; // Added this prop
+  projectId?: string;
 }
 
 // Define an interface for the taxonomies structure
@@ -82,7 +79,7 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
   onCancel,
   initialCabinet = {},
   maxWidth,
-  projectId // Added this to the destructuring
+  projectId
 }) => {
   const [cabinet, setCabinet] = useState<Cabinet>({
     ...defaultCabinet,
@@ -307,77 +304,20 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Configurator Corp Mobilier</DialogTitle>
-          <DialogDescription>
-            Configurați dimensiunile, materialele și accesoriile pentru corpul de mobilier.
-            {projectId && <span className="text-xs ml-1">(Proiect: {projectId})</span>}
-          </DialogDescription>
-        </DialogHeader>
+        <CabinetConfiguratorHeader projectId={projectId} />
         
-        {errors.length > 0 && (
-          <div className="mb-4">
-            {errors.map((error, index) => (
-              <Alert variant="destructive" key={index}>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            ))}
-          </div>
-        )}
+        <ErrorDisplay errors={errors} />
         
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2 col-span-3 sm:col-span-1">
-              <Label htmlFor="cabName">Nume corp</Label>
-              <Input
-                id="cabName"
-                value={cabinet.name}
-                onChange={(e) => setCabinet({ ...cabinet, name: e.target.value })}
-                placeholder="Corp bucătărie jos"
-              />
-            </div>
-            
-            <div className="space-y-2 col-span-3 sm:col-span-1">
-              <Label htmlFor="category">Categorie</Label>
-              <Select
-                value={cabinet.category}
-                onValueChange={(value) => handleCategoryChange('category', value)}
-              >
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Selectați categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2 col-span-3 sm:col-span-1">
-              <Label htmlFor="subcategory">Subcategorie</Label>
-              <Select
-                value={cabinet.subcategory}
-                onValueChange={(value) => handleCategoryChange('subcategory', value)}
-                disabled={!cabinet.category}
-              >
-                <SelectTrigger id="subcategory">
-                  <SelectValue placeholder="Selectați subcategoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cabinet.category && categories
-                    .find(cat => cat.id === cabinet.category)?.subcategories
-                    .map((subcat) => (
-                      <SelectItem key={subcat.id} value={subcat.id}>
-                        {subcat.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <BasicInfoForm
+            cabinetName={cabinet.name}
+            onNameChange={(name) => setCabinet(prev => ({ ...prev, name }))}
+            category={cabinet.category}
+            subcategory={cabinet.subcategory}
+            onCategoryChange={(value) => handleCategoryChange('category', value)}
+            onSubcategoryChange={(value) => handleCategoryChange('subcategory', value)}
+            categories={categories}
+          />
           
           <Separator />
           
@@ -389,173 +329,36 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
             </TabsList>
             
             <TabsContent value="dimensions" className="space-y-4 pt-4">
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label htmlFor="width">Lățime (mm): {cabinet.dimensions.width}</Label>
-                    <span className="text-sm text-muted-foreground">
-                      {maxWidth ? `Max: ${maxWidth}mm` : ''}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <Input
-                      id="width"
-                      type="number"
-                      min="100"
-                      max={maxWidth || 2000}
-                      value={cabinet.dimensions.width}
-                      onChange={(e) => handleDimensionChange('width', Number(e.target.value))}
-                      className="w-24"
-                    />
-                    <Slider
-                      value={[cabinet.dimensions.width]}
-                      min={100}
-                      max={maxWidth || 2000}
-                      step={10}
-                      className="flex-1"
-                      onValueChange={([value]) => handleDimensionChange('width', value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="height">Înălțime (mm): {cabinet.dimensions.height}</Label>
-                  <div className="flex items-center space-x-4">
-                    <Input
-                      id="height"
-                      type="number"
-                      min="100"
-                      max="2500"
-                      value={cabinet.dimensions.height}
-                      onChange={(e) => handleDimensionChange('height', Number(e.target.value))}
-                      className="w-24"
-                    />
-                    <Slider
-                      value={[cabinet.dimensions.height]}
-                      min={100}
-                      max={2500}
-                      step={10}
-                      className="flex-1"
-                      onValueChange={([value]) => handleDimensionChange('height', value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="depth">Adâncime (mm): {cabinet.dimensions.depth}</Label>
-                  <div className="flex items-center space-x-4">
-                    <Input
-                      id="depth"
-                      type="number"
-                      min="100"
-                      max="1000"
-                      value={cabinet.dimensions.depth}
-                      onChange={(e) => handleDimensionChange('depth', Number(e.target.value))}
-                      className="w-24"
-                    />
-                    <Slider
-                      value={[cabinet.dimensions.depth]}
-                      min={100}
-                      max={1000}
-                      step={10}
-                      className="flex-1"
-                      onValueChange={([value]) => handleDimensionChange('depth', value)}
-                    />
-                  </div>
-                </div>
-              </div>
+              <DimensionsTab
+                dimensions={cabinet.dimensions}
+                maxWidth={maxWidth}
+                onDimensionChange={handleDimensionChange}
+              />
             </TabsContent>
             
             <TabsContent value="materials" className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="mainMaterial">Material principal</Label>
-                <Select
-                  value={selectedMaterial}
-                  onValueChange={setSelectedMaterial}
-                >
-                  <SelectTrigger id="mainMaterial">
-                    <SelectValue placeholder="Selectați materialul" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {materials.map((material) => (
-                      <SelectItem key={material.id} value={material.id}>
-                        {material.name} ({material.price} RON/m²)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="mt-6">
-                <h3 className="font-medium mb-2">Detalii material:</h3>
-                {selectedMaterial && materials.find(m => m.id === selectedMaterial) && (
-                  <div className="bg-muted p-4 rounded-md">
-                    <p><strong>Nume:</strong> {materials.find(m => m.id === selectedMaterial)?.name}</p>
-                    <p><strong>Preț:</strong> {materials.find(m => m.id === selectedMaterial)?.price} RON/m²</p>
-                    <p><strong>Grosime:</strong> {materials.find(m => m.id === selectedMaterial)?.thickness} mm</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="mt-6">
-                <h3 className="font-medium mb-2">Previzualizare piese:</h3>
-                <div className="bg-muted p-4 rounded-md">
-                  <p>Număr piese: 5 (față, spate, laterale, bază, top)</p>
-                  <p>Suprafață totală: {((cabinet.dimensions.width * cabinet.dimensions.depth * 2 + 
-                    cabinet.dimensions.height * cabinet.dimensions.depth * 2 + 
-                    cabinet.dimensions.width * cabinet.dimensions.height) / 1000000).toFixed(2)} m²</p>
-                </div>
-              </div>
+              <MaterialsTab
+                selectedMaterial={selectedMaterial}
+                materials={materials}
+                onMaterialChange={setSelectedMaterial}
+                cabinetDimensions={cabinet.dimensions}
+              />
             </TabsContent>
             
             <TabsContent value="accessories" className="space-y-4 pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {accessories.map((accessory) => (
-                  <div key={accessory.id} className="flex items-center space-x-2 bg-card border p-3 rounded-md">
-                    <Checkbox
-                      id={accessory.id}
-                      checked={selectedAccessories[accessory.id] || false}
-                      onCheckedChange={(checked) => toggleAccessory(accessory.id, checked === true)}
-                    />
-                    <div className="flex-1">
-                      <Label htmlFor={accessory.id} className="cursor-pointer">
-                        {accessory.name} ({accessory.price} RON/buc)
-                      </Label>
-                    </div>
-                    {selectedAccessories[accessory.id] && (
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor={`quantity-${accessory.id}`}>Cantitate:</Label>
-                        <Input
-                          id={`quantity-${accessory.id}`}
-                          type="number"
-                          min="1"
-                          max="20"
-                          className="w-16"
-                          value={accessoryQuantities[accessory.id] || 1}
-                          onChange={(e) => updateAccessoryQuantity(accessory.id, Number(e.target.value))}
-                        />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-              
-              <Alert className="mt-4">
-                <AlertDescription>
-                  Notă: Balamalele sunt adăugate automat în funcție de dimensiunile corpului.
-                </AlertDescription>
-              </Alert>
+              <AccessoriesTab
+                accessories={accessories}
+                selectedAccessories={selectedAccessories}
+                accessoryQuantities={accessoryQuantities}
+                onToggleAccessory={toggleAccessory}
+                onUpdateQuantity={updateAccessoryQuantity}
+              />
             </TabsContent>
           </Tabs>
           
           <Separator />
           
-          <div className="bg-muted p-4 rounded-md">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="font-medium">Cost materiale:</div>
-              <div className="text-right">{calculateCabinetCost().toFixed(2)} RON</div>
-            </div>
-          </div>
+          <CostSummary cost={calculateCabinetCost()} />
         </div>
         
         <DialogFooter>
