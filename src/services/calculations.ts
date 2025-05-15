@@ -10,6 +10,8 @@ export interface MaterialItem {
   id: string;
   name: string;
   price: number; // price per square meter
+  category?: string;
+  subcategory?: string;
   thickness?: number; // mm
 }
 
@@ -17,6 +19,8 @@ export interface AccessoryItem {
   id: string;
   name: string;
   price: number;
+  category?: string;
+  subcategory?: string;
   quantity: number;
 }
 
