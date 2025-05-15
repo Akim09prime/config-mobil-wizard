@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { StorageKeys, getAll, remove } from '@/services/storage';
+import { StorageKeys, getAll, remove, getTaxonomies } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
 import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
 import AddProjectModal from '@/components/modals/AddProjectModal';
@@ -19,6 +20,8 @@ interface Project {
   date: string;
   status: 'draft' | 'active' | 'completed' | 'cancelled';
   total: number;
+  category?: string;
+  subcategory?: string;
   cabinets?: Cabinet[]; // Using the global Cabinet interface
 }
 
@@ -30,9 +33,13 @@ const Projects: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [taxonomies, setTaxonomies] = useState<{
+    categories: {id: string; name: string; subcategories: {id: string; name: string;}[]}[];
+  }>({ categories: [] });
 
   useEffect(() => {
     loadProjects();
+    loadTaxonomies();
   }, []);
 
   const loadProjects = () => {
@@ -51,12 +58,22 @@ const Projects: React.FC = () => {
     }
   };
 
+  const loadTaxonomies = () => {
+    try {
+      const allTaxonomies = getTaxonomies();
+      setTaxonomies({ categories: allTaxonomies.categories });
+    } catch (error) {
+      console.error('Error loading taxonomies:', error);
+      toast({
+        title: 'Eroare',
+        description: 'Nu s-au putut încărca taxonomiile',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleAddProject = () => {
     setIsAddModalOpen(true);
-  };
-  
-  const handleCreateNewProject = () => {
-    navigate('/projects/new');
   };
 
   const handleEditProject = (id: string) => {
@@ -128,14 +145,10 @@ const Projects: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Proiecte</h1>
-        <div className="flex space-x-3">
-          <Button onClick={handleCreateNewProject} className="flex items-center">
+        <div>
+          <Button onClick={handleAddProject} className="flex items-center">
             <PlusIcon className="mr-2 h-4 w-4" />
-            Proiect Nou cu Corpuri
-          </Button>
-          <Button onClick={handleAddProject} variant="outline" className="flex items-center">
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Proiect Simplu
+            Proiect Nou
           </Button>
         </div>
       </div>
@@ -147,6 +160,7 @@ const Projects: React.FC = () => {
               <TableRow>
                 <TableHead>Nume Proiect</TableHead>
                 <TableHead>Client</TableHead>
+                <TableHead>Categorie</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Total</TableHead>
@@ -156,7 +170,7 @@ const Projects: React.FC = () => {
             <TableBody>
               {projects.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                     Nu există proiecte definite
                   </TableCell>
                 </TableRow>
@@ -165,6 +179,14 @@ const Projects: React.FC = () => {
                   <TableRow key={project.id}>
                     <TableCell className="font-medium">{project.name}</TableCell>
                     <TableCell>{project.client}</TableCell>
+                    <TableCell>
+                      {project.category && (
+                        <span>
+                          {project.category}
+                          {project.subcategory && ` / ${project.subcategory}`}
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>{project.date}</TableCell>
                     <TableCell>{getStatusBadge(project.status)}</TableCell>
                     <TableCell>
@@ -205,6 +227,7 @@ const Projects: React.FC = () => {
         open={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
         onProjectAdded={loadProjects}
+        categories={taxonomies.categories}
       />
 
       <EditProjectModal
@@ -215,6 +238,7 @@ const Projects: React.FC = () => {
         }}
         onProjectUpdated={loadProjects}
         project={projectToEdit}
+        categories={taxonomies.categories}
       />
 
       <AlertDialog open={projectToDelete !== null} onOpenChange={() => setProjectToDelete(null)}>
