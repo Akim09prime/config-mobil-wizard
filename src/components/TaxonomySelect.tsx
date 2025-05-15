@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getTaxonomies } from '@/services/storage';
+import { Category, getTaxonomies } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
 
 interface TaxonomySelectProps {
@@ -19,7 +19,7 @@ export const TaxonomySelect: React.FC<TaxonomySelectProps> = ({
   placeholder = 'Selectează...',
   disabled = false
 }) => {
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export const SubcategorySelect: React.FC<{
   placeholder?: string;
   disabled?: boolean;
 }> = ({ type, categoryName, value, onChange, placeholder = 'Selectează...', disabled = false }) => {
-  const [subcategories, setSubcategories] = useState<{ id: string; name: string }[]>([]);
+  const [subcategories, setSubcategories] = useState<{ id: string; name: string; }[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -105,7 +105,7 @@ export const SubcategorySelect: React.FC<{
         const taxonomiesData = getTaxonomies();
         if (taxonomiesData && taxonomiesData[type]) {
           const category = taxonomiesData[type].find(
-            (cat: { name: string }) => cat.name === categoryName
+            (cat: Category) => cat.name === categoryName
           );
           
           if (category && category.subcategories) {

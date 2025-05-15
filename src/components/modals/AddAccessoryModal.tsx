@@ -4,24 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { StorageKeys, getTaxonomies, create } from '@/services/storage';
+import { StorageKeys, getTaxonomies, create, Category } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
 
 interface AddAccessoryModalProps {
   open: boolean;
   onClose: () => void;
   onAccessoryAdded: () => void;
-}
-
-interface AccessoryCategory {
-  id: string;
-  name: string;
-  subcategories: Subcategory[];
-}
-
-interface Subcategory {
-  id: string;
-  name: string;
 }
 
 interface Accessory {
@@ -39,8 +28,8 @@ const AddAccessoryModal: React.FC<AddAccessoryModalProps> = ({ open, onClose, on
   const [subcategoryId, setSubcategoryId] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
-  const [categories, setCategories] = useState<AccessoryCategory[]>([]);
-  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<{ id: string; name: string; }[]>([]);
 
   useEffect(() => {
     const taxonomiesData = getTaxonomies();

@@ -4,24 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { StorageKeys, getTaxonomies, create } from '@/services/storage';
+import { StorageKeys, getTaxonomies, create, Category } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
 
 interface AddMaterialModalProps {
   open: boolean;
   onClose: () => void;
   onMaterialAdded: () => void;
-}
-
-interface MaterialType {
-  id: string;
-  name: string;
-  subcategories: MaterialSubcategory[];
-}
-
-interface MaterialSubcategory {
-  id: string;
-  name: string;
 }
 
 interface Material {
@@ -45,8 +34,8 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ open, onClose, onMa
   const [thickness, setThickness] = useState('');
   const [width, setWidth] = useState('');
   const [height, setHeight] = useState('');
-  const [materialTypes, setMaterialTypes] = useState<MaterialType[]>([]);
-  const [subcategories, setSubcategories] = useState<MaterialSubcategory[]>([]);
+  const [materialTypes, setMaterialTypes] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<{ id: string; name: string; }[]>([]);
 
   useEffect(() => {
     const taxonomiesData = getTaxonomies();

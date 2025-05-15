@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { getTaxonomies, saveTaxonomies } from '@/services/storage';
+import { getTaxonomies, updateTaxonomies, Category, Subcategory } from '@/services/storage';
 import { PlusIcon, TrashIcon, MoveVertical, Pencil } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +33,7 @@ interface TaxonomyState {
 }
 
 const TaxonomiesAccessories: React.FC = () => {
-  const [taxonomies, setTaxonomies] = useState<TaxonomyState>({ accessoryCategories: [] });
+  const [taxonomies, setTaxonomies] = useState<{ accessoryCategories: Category[] }>({ accessoryCategories: [] });
   const [loading, setLoading] = useState<boolean>(true);
   const [categoryName, setCategoryName] = useState<string>('');
   const [subcategoryName, setSubcategoryName] = useState<string>('');
@@ -86,14 +85,15 @@ const TaxonomiesAccessories: React.FC = () => {
       subcategories: [],
     };
 
+    const updatedAccessoryCategories = [...taxonomies.accessoryCategories, newCategory];
     const updatedTaxonomies = {
-      ...taxonomies,
-      accessoryCategories: [...taxonomies.accessoryCategories, newCategory],
+      ...getTaxonomies(), // Get the full taxonomy object first
+      accessoryCategories: updatedAccessoryCategories,
     };
 
     try {
-      saveTaxonomies(updatedTaxonomies);
-      setTaxonomies(updatedTaxonomies);
+      updateTaxonomies(updatedTaxonomies);
+      setTaxonomies({ ...taxonomies, accessoryCategories: updatedAccessoryCategories });
       setCategoryName('');
       setIsAddCategoryOpen(false);
       toast({
@@ -143,7 +143,7 @@ const TaxonomiesAccessories: React.FC = () => {
       updatedTaxonomies.accessoryCategories[categoryIndex].subcategories.push(newSubcategory);
 
       try {
-        saveTaxonomies(updatedTaxonomies);
+        updateTaxonomies(updatedTaxonomies);
         setTaxonomies(updatedTaxonomies);
         setSubcategoryName('');
         setIsAddSubcategoryOpen(false);
@@ -169,7 +169,7 @@ const TaxonomiesAccessories: React.FC = () => {
     };
 
     try {
-      saveTaxonomies(updatedTaxonomies);
+      updateTaxonomies(updatedTaxonomies);
       setTaxonomies(updatedTaxonomies);
       toast({
         title: 'Succes',
@@ -198,7 +198,7 @@ const TaxonomiesAccessories: React.FC = () => {
         );
 
       try {
-        saveTaxonomies(updatedTaxonomies);
+        updateTaxonomies(updatedTaxonomies);
         setTaxonomies(updatedTaxonomies);
         toast({
           title: 'Succes',
@@ -240,7 +240,7 @@ const TaxonomiesAccessories: React.FC = () => {
       updatedTaxonomies.accessoryCategories[categoryIndex].name = editCategoryName.trim();
 
       try {
-        saveTaxonomies(updatedTaxonomies);
+        updateTaxonomies(updatedTaxonomies);
         setTaxonomies(updatedTaxonomies);
         setIsEditCategoryOpen(false);
         toast({
@@ -276,7 +276,7 @@ const TaxonomiesAccessories: React.FC = () => {
           editSubcategoryName.trim();
 
         try {
-          saveTaxonomies(updatedTaxonomies);
+          updateTaxonomies(updatedTaxonomies);
           setTaxonomies(updatedTaxonomies);
           setIsEditSubcategoryOpen(false);
           toast({

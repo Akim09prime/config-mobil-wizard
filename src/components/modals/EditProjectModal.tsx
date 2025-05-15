@@ -8,6 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { StorageKeys, update } from '@/services/storage';
 import { toast } from '@/components/ui/use-toast';
 
+interface Cabinet {
+  id: string;
+  [key: string]: any; 
+}
+
 interface EditProjectModalProps {
   open: boolean;
   onClose: () => void;
@@ -59,7 +64,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onPr
         total: parseFloat(total) || 0,
       };
 
-      // Fixed: update now takes only 2 parameters
+      // Update using the 2 parameters version
       update(StorageKeys.PROJECTS, updatedProject);
       
       toast({

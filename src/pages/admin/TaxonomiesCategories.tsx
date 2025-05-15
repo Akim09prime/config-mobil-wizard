@@ -1,25 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getTaxonomies, updateTaxonomies } from '@/services/storage';
+import { getTaxonomies, updateTaxonomies, Category, Subcategory } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { PlusIcon, TrashIcon, FolderPlus } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-
-interface Category {
-  id: string;
-  name: string;
-  subcategories: Subcategory[];
-}
-
-interface Subcategory {
-  id: string;
-  name: string;
-}
 
 const TaxonomiesCategories: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);

@@ -99,11 +99,23 @@ export function remove(key: StorageKeys, id: string): boolean {
   }
 }
 
+// Updated interface to include proper structure with objects instead of strings
+export interface Subcategory {
+  id: string;
+  name: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  subcategories: Subcategory[];
+}
+
 export interface Taxonomies {
-  categories: string[];
-  materialTypes: string[];
-  accessoryCategories: string[];
-  componentCategories: string[];
+  categories: Category[];
+  materialTypes: Category[];
+  accessoryCategories: Category[];
+  componentCategories: Category[];
 }
 
 export function getTaxonomies(): Taxonomies {
