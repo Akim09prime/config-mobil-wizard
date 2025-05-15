@@ -5,8 +5,8 @@
 interface Cabinet {
   id: string;
   name: string;
-  category?: string; // Made optional to match other definitions
-  subcategory?: string; // Made optional to match other definitions
+  category?: string;
+  subcategory?: string;
   dimensions?: {
     width: number;
     height: number;
@@ -17,6 +17,7 @@ interface Cabinet {
   depth: number;
   price: number;
   image?: string | null;
+  isPreset?: boolean; // Added isPreset property to fix type errors
   pieces?: {
     id: string;
     name: string;

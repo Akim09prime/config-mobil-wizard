@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,28 +13,29 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { getTaxonomies, updateTaxonomies, Category, Subcategory } from '@/services/storage';
+import { getTaxonomies, updateTaxonomies, Taxonomies } from '@/services/storage';
 import { PlusIcon, TrashIcon, MoveVertical, Pencil } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 
-interface Subcategory {
+// Using different names for local interface types to avoid conflicts
+interface TaxonomySubcategory {
   id: string;
   name: string;
 }
 
-interface Category {
+interface TaxonomyCategory {
   id: string;
   name: string;
-  subcategories: Subcategory[];
+  subcategories: TaxonomySubcategory[];
 }
 
 interface TaxonomyState {
-  accessoryCategories: Category[];
+  accessoryCategories: TaxonomyCategory[];
 }
 
 const TaxonomiesAccessories: React.FC = () => {
-  const [taxonomies, setTaxonomies] = useState<{ accessoryCategories: Category[] }>({ accessoryCategories: [] });
+  const [taxonomies, setTaxonomies] = useState<TaxonomyState>({ accessoryCategories: [] });
   const [loading, setLoading] = useState<boolean>(true);
   const [categoryName, setCategoryName] = useState<string>('');
   const [subcategoryName, setSubcategoryName] = useState<string>('');
@@ -79,21 +81,24 @@ const TaxonomiesAccessories: React.FC = () => {
       return;
     }
 
-    const newCategory: Category = {
+    const newCategory: TaxonomyCategory = {
       id: `cat_${Date.now()}`,
       name: categoryName.trim(),
       subcategories: [],
     };
 
     const updatedAccessoryCategories = [...taxonomies.accessoryCategories, newCategory];
+    
+    // Get the full taxonomy object and update just the accessoryCategories property
+    const fullTaxonomies = getTaxonomies();
     const updatedTaxonomies = {
-      ...getTaxonomies(), // Get the full taxonomy object first
+      ...fullTaxonomies,
       accessoryCategories: updatedAccessoryCategories,
     };
 
     try {
       updateTaxonomies(updatedTaxonomies);
-      setTaxonomies({ ...taxonomies, accessoryCategories: updatedAccessoryCategories });
+      setTaxonomies({ accessoryCategories: updatedAccessoryCategories });
       setCategoryName('');
       setIsAddCategoryOpen(false);
       toast({
@@ -129,22 +134,29 @@ const TaxonomiesAccessories: React.FC = () => {
       return;
     }
 
-    const updatedTaxonomies = { ...taxonomies };
-    const categoryIndex = updatedTaxonomies.accessoryCategories.findIndex(
+    const updatedLocalTaxonomies = { ...taxonomies };
+    const categoryIndex = updatedLocalTaxonomies.accessoryCategories.findIndex(
       (c) => c.id === selectedCategoryId
     );
 
     if (categoryIndex !== -1) {
-      const newSubcategory: Subcategory = {
+      const newSubcategory: TaxonomySubcategory = {
         id: `subcat_${Date.now()}`,
         name: subcategoryName.trim(),
       };
 
-      updatedTaxonomies.accessoryCategories[categoryIndex].subcategories.push(newSubcategory);
+      updatedLocalTaxonomies.accessoryCategories[categoryIndex].subcategories.push(newSubcategory);
+
+      // Get the full taxonomy object and update accessoryCategories
+      const fullTaxonomies = getTaxonomies();
+      const updatedTaxonomies = {
+        ...fullTaxonomies,
+        accessoryCategories: updatedLocalTaxonomies.accessoryCategories,
+      };
 
       try {
         updateTaxonomies(updatedTaxonomies);
-        setTaxonomies(updatedTaxonomies);
+        setTaxonomies(updatedLocalTaxonomies);
         setSubcategoryName('');
         setIsAddSubcategoryOpen(false);
         toast({
@@ -163,14 +175,21 @@ const TaxonomiesAccessories: React.FC = () => {
   };
 
   const handleDeleteCategory = (categoryId: string) => {
-    const updatedTaxonomies = {
+    const updatedLocalTaxonomies = {
       ...taxonomies,
       accessoryCategories: taxonomies.accessoryCategories.filter((c) => c.id !== categoryId),
     };
 
+    // Get the full taxonomy object and update accessoryCategories
+    const fullTaxonomies = getTaxonomies();
+    const updatedTaxonomies = {
+      ...fullTaxonomies,
+      accessoryCategories: updatedLocalTaxonomies.accessoryCategories,
+    };
+
     try {
       updateTaxonomies(updatedTaxonomies);
-      setTaxonomies(updatedTaxonomies);
+      setTaxonomies(updatedLocalTaxonomies);
       toast({
         title: 'Succes',
         description: 'Categoria a fost ștearsă',
@@ -186,20 +205,27 @@ const TaxonomiesAccessories: React.FC = () => {
   };
 
   const handleDeleteSubcategory = (categoryId: string, subcategoryId: string) => {
-    const updatedTaxonomies = { ...taxonomies };
-    const categoryIndex = updatedTaxonomies.accessoryCategories.findIndex(
+    const updatedLocalTaxonomies = { ...taxonomies };
+    const categoryIndex = updatedLocalTaxonomies.accessoryCategories.findIndex(
       (c) => c.id === categoryId
     );
 
     if (categoryIndex !== -1) {
-      updatedTaxonomies.accessoryCategories[categoryIndex].subcategories = 
-        updatedTaxonomies.accessoryCategories[categoryIndex].subcategories.filter(
+      updatedLocalTaxonomies.accessoryCategories[categoryIndex].subcategories = 
+        updatedLocalTaxonomies.accessoryCategories[categoryIndex].subcategories.filter(
           (sc) => sc.id !== subcategoryId
         );
 
+      // Get the full taxonomy object and update accessoryCategories
+      const fullTaxonomies = getTaxonomies();
+      const updatedTaxonomies = {
+        ...fullTaxonomies,
+        accessoryCategories: updatedLocalTaxonomies.accessoryCategories,
+      };
+
       try {
         updateTaxonomies(updatedTaxonomies);
-        setTaxonomies(updatedTaxonomies);
+        setTaxonomies(updatedLocalTaxonomies);
         toast({
           title: 'Succes',
           description: 'Subcategoria a fost ștearsă',
@@ -215,13 +241,13 @@ const TaxonomiesAccessories: React.FC = () => {
     }
   };
 
-  const openEditCategory = (category: Category) => {
+  const openEditCategory = (category: TaxonomyCategory) => {
     setEditCategoryId(category.id);
     setEditCategoryName(category.name);
     setIsEditCategoryOpen(true);
   };
 
-  const openEditSubcategory = (categoryId: string, subcategory: Subcategory) => {
+  const openEditSubcategory = (categoryId: string, subcategory: TaxonomySubcategory) => {
     setSelectedCategoryId(categoryId);
     setEditSubcategoryId(subcategory.id);
     setEditSubcategoryName(subcategory.name);
@@ -231,17 +257,24 @@ const TaxonomiesAccessories: React.FC = () => {
   const handleEditCategory = () => {
     if (!editCategoryId || !editCategoryName.trim()) return;
 
-    const updatedTaxonomies = { ...taxonomies };
-    const categoryIndex = updatedTaxonomies.accessoryCategories.findIndex(
+    const updatedLocalTaxonomies = { ...taxonomies };
+    const categoryIndex = updatedLocalTaxonomies.accessoryCategories.findIndex(
       (c) => c.id === editCategoryId
     );
 
     if (categoryIndex !== -1) {
-      updatedTaxonomies.accessoryCategories[categoryIndex].name = editCategoryName.trim();
+      updatedLocalTaxonomies.accessoryCategories[categoryIndex].name = editCategoryName.trim();
+
+      // Get the full taxonomy object and update accessoryCategories
+      const fullTaxonomies = getTaxonomies();
+      const updatedTaxonomies = {
+        ...fullTaxonomies,
+        accessoryCategories: updatedLocalTaxonomies.accessoryCategories,
+      };
 
       try {
         updateTaxonomies(updatedTaxonomies);
-        setTaxonomies(updatedTaxonomies);
+        setTaxonomies(updatedLocalTaxonomies);
         setIsEditCategoryOpen(false);
         toast({
           title: 'Succes',
@@ -261,23 +294,30 @@ const TaxonomiesAccessories: React.FC = () => {
   const handleEditSubcategory = () => {
     if (!selectedCategoryId || !editSubcategoryId || !editSubcategoryName.trim()) return;
 
-    const updatedTaxonomies = { ...taxonomies };
-    const categoryIndex = updatedTaxonomies.accessoryCategories.findIndex(
+    const updatedLocalTaxonomies = { ...taxonomies };
+    const categoryIndex = updatedLocalTaxonomies.accessoryCategories.findIndex(
       (c) => c.id === selectedCategoryId
     );
 
     if (categoryIndex !== -1) {
-      const subcatIndex = updatedTaxonomies.accessoryCategories[categoryIndex].subcategories.findIndex(
+      const subcatIndex = updatedLocalTaxonomies.accessoryCategories[categoryIndex].subcategories.findIndex(
         (sc) => sc.id === editSubcategoryId
       );
 
       if (subcatIndex !== -1) {
-        updatedTaxonomies.accessoryCategories[categoryIndex].subcategories[subcatIndex].name = 
+        updatedLocalTaxonomies.accessoryCategories[categoryIndex].subcategories[subcatIndex].name = 
           editSubcategoryName.trim();
+
+        // Get the full taxonomy object and update accessoryCategories
+        const fullTaxonomies = getTaxonomies();
+        const updatedTaxonomies = {
+          ...fullTaxonomies,
+          accessoryCategories: updatedLocalTaxonomies.accessoryCategories,
+        };
 
         try {
           updateTaxonomies(updatedTaxonomies);
-          setTaxonomies(updatedTaxonomies);
+          setTaxonomies(updatedLocalTaxonomies);
           setIsEditSubcategoryOpen(false);
           toast({
             title: 'Succes',
