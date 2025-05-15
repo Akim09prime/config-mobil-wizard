@@ -165,7 +165,7 @@ const Projects: React.FC = () => {
                     <TableCell>{project.date}</TableCell>
                     <TableCell>{getStatusBadge(project.status)}</TableCell>
                     <TableCell>
-                      {project.total} RON
+                      {project.total !== null && project.total !== undefined ? `${project.total} RON` : '0 RON'}
                       {project.cabinets && project.cabinets.length > 0 && (
                         <span className="ml-2 text-xs text-muted-foreground">
                           ({project.cabinets.length} corpuri)

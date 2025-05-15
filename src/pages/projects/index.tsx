@@ -133,7 +133,11 @@ export default function ProjectsList() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Total:</span>
-                    <span className="font-bold">{project.total.toLocaleString('ro-RO')} RON</span>
+                    <span className="font-bold">
+                      {project.total !== null && project.total !== undefined
+                        ? `${project.total.toLocaleString('ro-RO')} RON`
+                        : '0 RON'}
+                    </span>
                   </div>
                 </div>
               </CardContent>
