@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/auth/Login";
@@ -29,6 +29,7 @@ import ClientOfferPage from "./pages/client/offer";
 import ProjectsList from "./pages/projects/index";
 import NewProject from "./pages/project/NewProject";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ProjectProvider } from "./contexts/ProjectContext";
 
 const queryClient = new QueryClient();
 
@@ -76,10 +77,14 @@ const App = () => (
               </ProtectedRoute>
             } />
             
-            {/* Proiectant Routes */}
+            {/* Project Routes */}
+            <Route path="/project" element={<Navigate to="/projects" replace />} />
+            
             <Route path="/project/new" element={
               <ProtectedRoute allowedRoles={["proiectant", "administrator"]}>
-                <NewProject />
+                <ProjectProvider>
+                  <NewProject />
+                </ProjectProvider>
               </ProtectedRoute>
             } />
             

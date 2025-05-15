@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -237,9 +238,11 @@ const ProjectContent: React.FC = () => {
 
 const NewProject = () => {
   return (
-    <ProjectLayout>
-      <ProjectContent />
-    </ProjectLayout>
+    <ProjectProvider>
+      <ProjectLayout>
+        <ProjectContent />
+      </ProjectLayout>
+    </ProjectProvider>
   );
 };
 
