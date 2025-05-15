@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth, UserRole } from '../contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -15,6 +16,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   redirectTo = '/auth/login'
 }) => {
   const { isAuthenticated, user, loading } = useAuth();
+  
+  // Debug information
+  useEffect(() => {
+    console.log('Protected Route Status:', {
+      isAuthenticated, 
+      userRole: user?.role,
+      allowedRoles,
+      loading
+    });
+  }, [isAuthenticated, user, allowedRoles, loading]);
   
   // Show loading state while checking authentication
   if (loading) {
@@ -30,6 +41,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   
   // If not authenticated, redirect to login
   if (!isAuthenticated || !user) {
+    // Using the toast to inform user that authentication is required
+    toast({
+      title: "Autentificare necesară",
+      description: "Trebuie să vă autentificați pentru a accesa această pagină.",
+      variant: "destructive",
+    });
     return <Navigate to={redirectTo} />;
   }
   
@@ -39,6 +56,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
   
   // If user doesn't have the required role, redirect based on role
+  toast({
+    title: "Acces restricționat",
+    description: "Nu aveți permisiunea de a accesa această pagină.",
+    variant: "destructive",
+  });
+  
   if (user.role === 'administrator') {
     return <Navigate to="/admin/dashboard" />;
   } else if (user.role === 'proiectant') {
