@@ -15,12 +15,23 @@ const CabinetList: React.FC<CabinetListProps> = ({ onAddCabinet, onEditCabinet }
   const { cabinets, deleteCabinet } = useProject();
 
   const handleDeleteCabinet = (id: string, name: string) => {
-    deleteCabinet(id);
-    toast({
-      title: "Corp șters",
-      description: `${name} a fost șters din proiect`
-    });
+    try {
+      deleteCabinet(id);
+      toast({
+        title: "Corp șters",
+        description: `${name} a fost șters din proiect`
+      });
+    } catch (error) {
+      console.error("Eroare la ștergerea corpului:", error);
+      toast({
+        title: "Eroare",
+        description: "Nu s-a putut șterge corpul",
+        variant: "destructive"
+      });
+    }
   };
+
+  console.log("Cabinete în CabinetList:", cabinets);
 
   return (
     <div className="space-y-4">
@@ -32,7 +43,7 @@ const CabinetList: React.FC<CabinetListProps> = ({ onAddCabinet, onEditCabinet }
         </Button>
       </div>
 
-      {cabinets.length === 0 ? (
+      {!cabinets || cabinets.length === 0 ? (
         <Card className="bg-muted/50">
           <CardContent className="py-6 text-center">
             <Package className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
@@ -52,8 +63,14 @@ const CabinetList: React.FC<CabinetListProps> = ({ onAddCabinet, onEditCabinet }
                 <CardTitle className="text-lg">{cabinet.name}</CardTitle>
               </CardHeader>
               <CardContent className="py-2">
-                <p className="text-sm">Dimensiuni: {cabinet.width}×{cabinet.height}×{cabinet.depth} mm</p>
-                <p className="text-sm font-medium mt-1">Preț: {cabinet.price || (cabinet.totalCost ? cabinet.totalCost.toFixed(2) : 0)} RON</p>
+                <p className="text-sm">
+                  Dimensiuni: {cabinet.width || cabinet.dimensions?.width || 0}×
+                  {cabinet.height || cabinet.dimensions?.height || 0}×
+                  {cabinet.depth || cabinet.dimensions?.depth || 0} mm
+                </p>
+                <p className="text-sm font-medium mt-1">
+                  Preț: {cabinet.price !== undefined ? cabinet.price : (cabinet.totalCost || 0)} RON
+                </p>
               </CardContent>
               <CardFooter className="pt-2 flex justify-end space-x-2">
                 <Button size="sm" variant="outline" onClick={() => onEditCabinet(cabinet)}>

@@ -4,6 +4,7 @@ import {
   calculateProjectMaterialTotal, 
   calculateProjectAccessoryTotal 
 } from '@/services/calculations';
+import { normalizeCabinets } from '@/utils/cabinetHelpers';
 
 interface ProjectContextType {
   projectName: string;
@@ -33,29 +34,69 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Calculate totals when cabinets change
   useEffect(() => {
-    const materialTotal = calculateProjectMaterialTotal(cabinets);
-    const accessoryTotal = calculateProjectAccessoryTotal(cabinets);
-
-    setMaterialTotal(materialTotal);
-    setAccessoryTotal(accessoryTotal);
+    if (cabinets && cabinets.length > 0) {
+      try {
+        const materialTotal = calculateProjectMaterialTotal(cabinets);
+        const accessoryTotal = calculateProjectAccessoryTotal(cabinets);
+        
+        setMaterialTotal(materialTotal);
+        setAccessoryTotal(accessoryTotal);
+        
+        console.log('Project totals calculated:', { materialTotal, accessoryTotal });
+      } catch (error) {
+        console.error('Error calculating project totals:', error);
+        setMaterialTotal(0);
+        setAccessoryTotal(0);
+      }
+    } else {
+      setMaterialTotal(0);
+      setAccessoryTotal(0);
+    }
   }, [cabinets]);
 
   // Cabinet operations
   const addCabinet = (cabinet: Cabinet) => {
-    setCabinets([...cabinets, cabinet]);
+    console.log('Adding cabinet to project:', cabinet);
+    setCabinets(prevCabinets => {
+      const newCabinets = [...prevCabinets, cabinet];
+      console.log('New cabinets state:', newCabinets);
+      return newCabinets;
+    });
   };
 
   const updateCabinet = (id: string, updatedCabinet: Cabinet) => {
-    const updatedCabinets = cabinets.map((cabinet) =>
-      cabinet.id === id ? updatedCabinet : cabinet
-    );
-    setCabinets(updatedCabinets);
+    console.log('Updating cabinet in project:', { id, cabinet: updatedCabinet });
+    setCabinets(prevCabinets => {
+      const newCabinets = prevCabinets.map(cabinet => 
+        cabinet.id === id ? updatedCabinet : cabinet
+      );
+      console.log('Updated cabinets state:', newCabinets);
+      return newCabinets;
+    });
   };
 
   const deleteCabinet = (id: string) => {
-    const updatedCabinets = cabinets.filter((cabinet) => cabinet.id !== id);
-    setCabinets(updatedCabinets);
+    console.log('Deleting cabinet from project:', id);
+    setCabinets(prevCabinets => {
+      const newCabinets = prevCabinets.filter(cabinet => cabinet.id !== id);
+      console.log('Cabinets after deletion:', newCabinets);
+      return newCabinets;
+    });
   };
+
+  // When furniture presets are set, ensure they are normalized
+  useEffect(() => {
+    if (furniturePresets && furniturePresets.length > 0) {
+      const normalized = normalizeCabinets(furniturePresets);
+      if (JSON.stringify(normalized) !== JSON.stringify(furniturePresets)) {
+        console.log('Normalizing furniture presets:', { 
+          original: furniturePresets.length, 
+          normalized: normalized.length 
+        });
+        setFurniturePresets(normalized);
+      }
+    }
+  }, [furniturePresets]);
 
   const value = {
     projectName,

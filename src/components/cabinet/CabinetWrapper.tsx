@@ -37,17 +37,31 @@ const CabinetWrapper: React.FC<CabinetWrapperProps> = ({
   }, [open, initialCabinet]);
 
   // Normalize initial cabinet if provided
-  const normalizedInitialCabinet = initialCabinet ? normalizeCabinet(initialCabinet) : undefined;
+  const normalizedInitialCabinet = initialCabinet && Object.keys(initialCabinet).length > 0 
+    ? normalizeCabinet(initialCabinet) 
+    : undefined;
   
   // Wrap the onSave callback to normalize the cabinet before passing it up
   const handleSave = (cabinet: Cabinet) => {
     console.log('🔧 CabinetWrapper handleSave called with cabinet:', cabinet);
-    const normalizedCabinet = normalizeCabinet(cabinet);
-    onSave(normalizedCabinet);
-    toast({
-      title: "Succes",
-      description: "Corp adăugat în proiect"
-    });
+    try {
+      const normalizedCabinet = normalizeCabinet(cabinet);
+      if (!normalizedCabinet) {
+        throw new Error("Cabinet normalization failed");
+      }
+      onSave(normalizedCabinet);
+      toast({
+        title: "Succes",
+        description: "Corp adăugat în proiect"
+      });
+    } catch (error) {
+      console.error("Eroare la salvarea corpului:", error);
+      toast({
+        title: "Eroare", 
+        description: "Nu s-a putut adăuga corpul în proiect",
+        variant: "destructive"
+      });
+    }
   };
 
   // If not open, don't render the CabinetConfigurator

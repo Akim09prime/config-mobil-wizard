@@ -45,6 +45,7 @@ const ProjectContent: React.FC = () => {
       try {
         const presets = await getFurniturePresets();
         setFurniturePresets(presets);
+        console.log("Presets loaded:", presets);
       } catch (error) {
         console.error("Error loading presets:", error);
         setFurniturePresets([]);
@@ -168,7 +169,9 @@ const ProjectContent: React.FC = () => {
         height: 720,
         depth: 560
       },
-      image: null
+      image: null,
+      category: '',
+      subcategory: '',
     };
     
     console.log('Creating new cabinet:', newCabinet);
@@ -184,15 +187,32 @@ const ProjectContent: React.FC = () => {
 
   const handleSaveCabinet = (cabinet: Cabinet) => {
     console.log('Saving cabinet:', cabinet);
-    if (cabinets.some(c => c.id === cabinet.id)) {
-      // Update existing cabinet
-      updateCabinet(cabinet.id, cabinet);
-    } else {
-      // Add new cabinet
-      addCabinet(cabinet);
+    try {
+      if (cabinets.some(c => c.id === cabinet.id)) {
+        // Update existing cabinet
+        updateCabinet(cabinet.id, cabinet);
+        toast({
+          title: "Succes",
+          description: "Corpul a fost actualizat"
+        });
+      } else {
+        // Add new cabinet
+        addCabinet(cabinet);
+        toast({
+          title: "Succes",
+          description: "Corpul a fost adăugat"
+        });
+      }
+      setIsModalOpen(false);
+      setCurrentCabinet(null);
+    } catch (error) {
+      console.error("Eroare la salvarea corpului:", error);
+      toast({
+        title: "Eroare",
+        description: "Nu s-a putut salva corpul",
+        variant: "destructive"
+      });
     }
-    setIsModalOpen(false);
-    setCurrentCabinet(null);
   };
 
   const handleCloseModal = () => {
@@ -224,12 +244,12 @@ const ProjectContent: React.FC = () => {
         </CardFooter>
       </Card>
 
-      {isModalOpen && (
+      {isModalOpen && currentCabinet && (
         <CabinetWrapper
           open={isModalOpen}
           onClose={handleCloseModal}
           onSave={handleSaveCabinet}
-          initialCabinet={currentCabinet || {}}
+          initialCabinet={currentCabinet}
         />
       )}
     </div>

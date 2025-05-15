@@ -55,21 +55,41 @@ const PresetSelector: React.FC = () => {
     
     const preset = furniturePresets.find((p) => p.id === value);
     if (preset) {
-      // Add a deep copy of the preset to avoid reference issues
-      const presetCopy = JSON.parse(JSON.stringify(preset));
-      presetCopy.id = `cab_${Date.now()}`; // Ensure unique ID
-      setCabinets([...cabinets, presetCopy]);
-      
-      // Show success toast
-      toast({
-        title: "Corp adăugat",
-        description: `${preset.name} a fost adăugat în proiect`
-      });
-      
-      // Reset the preset selector after adding
-      setTimeout(() => {
-        setSelectedPreset("none");
-      }, 100);
+      try {
+        // Add a deep copy of the preset to avoid reference issues
+        const presetCopy = JSON.parse(JSON.stringify(preset));
+        presetCopy.id = `cab_${Date.now()}`; // Ensure unique ID
+        
+        // Make sure all required properties exist
+        if (!presetCopy.dimensions) {
+          presetCopy.dimensions = {
+            width: presetCopy.width || 600,
+            height: presetCopy.height || 720,
+            depth: presetCopy.depth || 560
+          };
+        }
+        
+        // Add the cabinet to the project
+        setCabinets(prevCabinets => [...prevCabinets, presetCopy]);
+        
+        // Show success toast
+        toast({
+          title: "Corp adăugat",
+          description: `${preset.name} a fost adăugat în proiect`
+        });
+        
+        // Reset the preset selector after adding
+        setTimeout(() => {
+          setSelectedPreset("none");
+        }, 100);
+      } catch (error) {
+        console.error("Eroare la adăugarea corpului:", error);
+        toast({
+          title: "Eroare",
+          description: "Nu s-a putut adăuga corpul în proiect",
+          variant: "destructive"
+        });
+      }
     }
   };
 
