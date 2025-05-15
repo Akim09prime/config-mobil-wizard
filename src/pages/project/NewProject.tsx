@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { StorageKeys, create, update, getFurniturePresets } from '@/services/storage';
 import CabinetWrapper from '@/components/cabinet/CabinetWrapper';
 import { generateQuotePDF } from '@/services/pdf';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import {
   calculateProjectMaterialTotal,
   calculateProjectAccessoryTotal,
@@ -29,7 +29,6 @@ interface Project {
 
 const NewProject: React.FC = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [projectName, setProjectName] = useState('');
   const [clientName, setClientName] = useState('');
   const [cabinets, setCabinets] = useState<Cabinet[]>([]);
@@ -198,7 +197,7 @@ const NewProject: React.FC = () => {
       depth: 560,
       price: 0,
       // Add the missing required properties
-      material: 'PAL',
+      materials: [], // Changed from 'material' to 'materials'
       quantity: 1,
       accessories: [], // This should include quantity property for each accessory
       totalCost: 0
