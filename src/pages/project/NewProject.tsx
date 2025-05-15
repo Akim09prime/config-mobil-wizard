@@ -2,20 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { StorageKeys, create, update, getFurniturePresets } from '@/services/storage';
-import CabinetWrapper from '@/components/cabinet/CabinetWrapper';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { StorageKeys, create, getFurniturePresets } from '@/services/storage';
 import { generateQuotePDF } from '@/services/pdf';
 import { toast } from '@/hooks/use-toast';
-import {
-  calculateProjectMaterialTotal,
-  calculateProjectAccessoryTotal,
-} from '@/services/calculations';
-
-// Remove the local Cabinet interface and use the global one from vite-env.d.ts
+import CabinetWrapper from '@/components/cabinet/CabinetWrapper';
+import ProjectForm from '@/components/project/ProjectForm';
+import PresetSelector from '@/components/project/PresetSelector';
+import CabinetList from '@/components/project/CabinetList';
+import ProjectSummary from '@/components/project/ProjectSummary';
+import { ProjectProvider, useProject } from '@/contexts/ProjectContext';
 
 interface Project {
   id: string;
@@ -27,20 +23,23 @@ interface Project {
   cabinets: Cabinet[];
 }
 
-const NewProject: React.FC = () => {
+const ProjectContent: React.FC = () => {
   const navigate = useNavigate();
-  const [projectName, setProjectName] = useState('');
-  const [clientName, setClientName] = useState('');
-  const [cabinets, setCabinets] = useState<Cabinet[]>([]);
-  const [furniturePresets, setFurniturePresets] = useState<Cabinet[]>([]);
-  const [selectedPreset, setSelectedPreset] = useState<string>('');
-  const [materialTotal, setMaterialTotal] = useState(0);
-  const [accessoryTotal, setAccessoryTotal] = useState(0);
+  const { 
+    projectName, 
+    clientName, 
+    cabinets, 
+    setFurniturePresets, 
+    materialTotal, 
+    accessoryTotal, 
+    addCabinet, 
+    updateCabinet 
+  } = useProject();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentCabinet, setCurrentCabinet] = useState<Cabinet | null>(null);
 
   useEffect(() => {
-    // Fix: Handle the promise correctly
+    // Load furniture presets
     const loadPresets = async () => {
       try {
         const presets = await getFurniturePresets();
@@ -52,44 +51,7 @@ const NewProject: React.FC = () => {
     };
     
     loadPresets();
-  }, []);
-
-  useEffect(() => {
-    // Calculate totals whenever cabinets change
-    const materialTotal = calculateProjectMaterialTotal(cabinets);
-    const accessoryTotal = calculateProjectAccessoryTotal(cabinets);
-
-    setMaterialTotal(materialTotal);
-    setAccessoryTotal(accessoryTotal);
-  }, [cabinets]);
-
-  const addCabinet = (cabinet: Cabinet) => {
-    setCabinets([...cabinets, cabinet]);
-  };
-
-  const updateCabinet = (id: string, updatedCabinet: Cabinet) => {
-    const updatedCabinets = cabinets.map((cabinet) =>
-      cabinet.id === id ? updatedCabinet : cabinet
-    );
-    setCabinets(updatedCabinets);
-  };
-
-  const deleteCabinet = (id: string) => {
-    const updatedCabinets = cabinets.filter((cabinet) => cabinet.id !== id);
-    setCabinets(updatedCabinets);
-  };
-
-  // Fix type issues with Select - change to use value directly
-  const handlePresetSelect = (value: string) => {
-    setSelectedPreset(value);
-    if (value === '') {
-      return;
-    }
-    const preset = furniturePresets.find((p) => p.id === value);
-    if (preset) {
-      setCabinets([...cabinets, preset]);
-    }
-  };
+  }, [setFurniturePresets]);
 
   const handleSubmit = () => {
     if (!projectName || !clientName) {
@@ -188,7 +150,7 @@ const NewProject: React.FC = () => {
   };
 
   const handleAddCabinet = () => {
-    // Create a placeholder cabinet that's compatible with the global Cabinet interface
+    // Create a placeholder cabinet
     const newCabinet: Cabinet = {
       id: `cab_${Date.now()}`,
       name: 'Corp nou',
@@ -199,13 +161,13 @@ const NewProject: React.FC = () => {
       materials: [],
       accessories: [],
       totalCost: 0,
-      pieces: [], // Add missing required property
-      dimensions: { // Add missing required property
+      pieces: [],
+      dimensions: {
         width: 600,
         height: 720,
         depth: 560
       },
-      image: null // Add missing required property
+      image: null
     };
     
     console.log('Creating new cabinet:', newCabinet);
@@ -248,84 +210,10 @@ const NewProject: React.FC = () => {
           <CardTitle>Proiect Nou</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="projectName">Nume Proiect</Label>
-              <Input
-                type="text"
-                id="projectName"
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="clientName">Nume Client</Label>
-              <Input
-                type="text"
-                id="clientName"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="furniturePreset">Corpuri Presetate</Label>
-            <Select onValueChange={handlePresetSelect} value={selectedPreset}>
-              <SelectTrigger id="furniturePreset">
-                <SelectValue placeholder="Selectează un corp presetat" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Niciunul</SelectItem>
-                {furniturePresets.map((preset) => (
-                  <SelectItem key={preset.id} value={preset.id}>
-                    {preset.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            {cabinets.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Corpuri adăugate</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {cabinets.map((cabinet) => (
-                    <Card key={cabinet.id}>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">{cabinet.name}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="py-2">
-                        <p>Dimensiuni: {cabinet.width}x{cabinet.height}x{cabinet.depth} cm</p>
-                        <p>Preț: {cabinet.price} RON</p>
-                      </CardContent>
-                      <CardFooter className="pt-2 flex justify-end space-x-2">
-                        <Button size="sm" variant="outline" onClick={() => handleEditCabinet(cabinet)}>
-                          Editează
-                        </Button>
-                        <Button size="sm" variant="destructive" onClick={() => deleteCabinet(cabinet.id)}>
-                          Șterge
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <Button onClick={handleAddCabinet} className="mt-4">
-              Adaugă Corp Nou
-            </Button>
-          </div>
-
-          <div>
-            <h3 className="text-xl font-semibold">Total Materiale: {materialTotal} RON</h3>
-            <h3 className="text-xl font-semibold">Total Accesorii: {accessoryTotal} RON</h3>
-            <h3 className="text-2xl font-bold">
-              Total Proiect: {materialTotal + accessoryTotal} RON
-            </h3>
-          </div>
+          <ProjectForm />
+          <PresetSelector />
+          <CabinetList onAddCabinet={handleAddCabinet} onEditCabinet={handleEditCabinet} />
+          <ProjectSummary />
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button variant="outline" onClick={handleGeneratePDF}>
@@ -344,6 +232,14 @@ const NewProject: React.FC = () => {
         />
       )}
     </div>
+  );
+};
+
+const NewProject: React.FC = () => {
+  return (
+    <ProjectProvider>
+      <ProjectContent />
+    </ProjectProvider>
   );
 };
 
