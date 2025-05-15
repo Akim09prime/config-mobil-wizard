@@ -32,7 +32,11 @@ export const TaxonomySelect: React.FC<TaxonomySelectProps> = ({
         setLoading(false);
       } catch (error) {
         console.error(`Error loading ${type}:`, error);
-        toast.error("Nu s-au putut încărca categoriile");
+        toast({
+          title: "Eroare",
+          description: "Nu s-au putut încărca categoriile",
+          variant: "destructive"
+        });
         setLoading(false);
       }
     };
@@ -107,7 +111,11 @@ export const SubcategorySelect: React.FC<{
         setLoading(false);
       } catch (error) {
         console.error(`Error loading subcategories for ${categoryName}:`, error);
-        toast.error("Nu s-au putut încărca subcategoriile");
+        toast({
+          title: "Eroare",
+          description: "Nu s-au putut încărca subcategoriile",
+          variant: "destructive"
+        });
         setLoading(false);
       }
     };
@@ -132,7 +140,7 @@ export const SubcategorySelect: React.FC<{
       </SelectTrigger>
       <SelectContent>
         {subcategories.length === 0 ? (
-          <SelectItem value="no-options" disabled>
+          <SelectItem value="no-subcategories" disabled>
             Nu există subcategorii
           </SelectItem>
         ) : (

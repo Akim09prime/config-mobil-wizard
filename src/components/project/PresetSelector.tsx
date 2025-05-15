@@ -7,11 +7,11 @@ import { toast } from '@/hooks/use-toast';
 
 const PresetSelector: React.FC = () => {
   const { furniturePresets, cabinets, setCabinets } = useProject();
-  const [selectedPreset, setSelectedPreset] = React.useState<string>('');
+  const [selectedPreset, setSelectedPreset] = React.useState<string>('none');
 
   const handlePresetSelect = (value: string) => {
     setSelectedPreset(value);
-    if (value === '') {
+    if (value === 'none') {
       return;
     }
     
@@ -30,7 +30,7 @@ const PresetSelector: React.FC = () => {
       
       // Reset the selector after adding
       setTimeout(() => {
-        setSelectedPreset('');
+        setSelectedPreset('none');
       }, 100);
     }
   };
@@ -43,7 +43,7 @@ const PresetSelector: React.FC = () => {
           <SelectValue placeholder="Selectează un corp presetat" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Selectează...</SelectItem>
+          <SelectItem value="none">Selectează...</SelectItem>
           {furniturePresets.map((preset) => (
             <SelectItem key={preset.id} value={preset.id}>
               {preset.name}
