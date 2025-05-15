@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { StorageKeys, create, update, getFurniturePresets } from '@/services/storage';
 import CabinetWrapper from '@/components/cabinet/CabinetWrapper';
 import { generateQuotePDF } from '@/services/pdf';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import {
   calculateProjectMaterialTotal,
   calculateProjectAccessoryTotal,
@@ -196,27 +196,37 @@ const NewProject: React.FC = () => {
       height: 720,
       depth: 560,
       price: 0,
-      // Add all required properties according to the global Cabinet interface
       materials: [],
       accessories: [],
-      totalCost: 0
+      totalCost: 0,
+      pieces: [], // Add missing required property
+      dimensions: { // Add missing required property
+        width: 600,
+        height: 720,
+        depth: 560
+      },
+      image: null // Add missing required property
     };
+    
+    console.log('Creating new cabinet:', newCabinet);
     setCurrentCabinet(newCabinet);
     setIsModalOpen(true);
   };
 
   const handleEditCabinet = (cabinet: Cabinet) => {
+    console.log('Editing cabinet:', cabinet);
     setCurrentCabinet(cabinet);
     setIsModalOpen(true);
   };
 
   const handleSaveCabinet = (cabinet: Cabinet) => {
+    console.log('Saving cabinet:', cabinet);
     if (cabinets.some(c => c.id === cabinet.id)) {
       // Update existing cabinet
-      setCabinets(cabinets.map(c => c.id === cabinet.id ? cabinet : c));
+      updateCabinet(cabinet.id, cabinet);
     } else {
       // Add new cabinet
-      setCabinets([...cabinets, cabinet]);
+      addCabinet(cabinet);
     }
     setIsModalOpen(false);
     setCurrentCabinet(null);
@@ -226,6 +236,10 @@ const NewProject: React.FC = () => {
     setIsModalOpen(false);
     setCurrentCabinet(null);
   };
+
+  // Add console log for debugging
+  console.log('Cabinet Modal State:', { isModalOpen, currentCabinet });
+  console.log('Current Cabinets:', cabinets);
 
   return (
     <div>
@@ -321,12 +335,14 @@ const NewProject: React.FC = () => {
         </CardFooter>
       </Card>
 
-      <CabinetWrapper
-        open={isModalOpen}
-        onClose={handleCloseModal}
-        onSave={handleSaveCabinet}
-        initialCabinet={currentCabinet || {}}
-      />
+      {isModalOpen && (
+        <CabinetWrapper
+          open={isModalOpen}
+          onClose={handleCloseModal}
+          onSave={handleSaveCabinet}
+          initialCabinet={currentCabinet || {}}
+        />
+      )}
     </div>
   );
 };

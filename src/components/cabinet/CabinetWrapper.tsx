@@ -28,6 +28,7 @@ const CabinetWrapper: React.FC<CabinetWrapperProps> = ({
 }) => {
   // Add debugging log to verify the open prop value
   console.log('🔧 CabinetWrapper open:', open);
+  console.log('🔧 CabinetWrapper initialCabinet:', initialCabinet);
   
   // Log when props change
   useEffect(() => {
@@ -43,6 +44,11 @@ const CabinetWrapper: React.FC<CabinetWrapperProps> = ({
     const normalizedCabinet = normalizeCabinet(cabinet);
     onSave(normalizedCabinet);
   };
+
+  // If not open, don't render the CabinetConfigurator
+  if (!open) {
+    return null;
+  }
 
   return (
     <CabinetConfigurator
