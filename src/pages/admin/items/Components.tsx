@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -177,7 +178,8 @@ const ComponentItems: React.FC = () => {
     }
 
     try {
-      update(StorageKeys.COMPONENTS, editingComponent.id, editingComponent);
+      // Fix: remove the third argument from update call
+      update(StorageKeys.COMPONENTS, editingComponent);
       toast({
         title: 'Succes',
         description: 'Componenta a fost actualizată cu succes'

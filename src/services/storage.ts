@@ -201,7 +201,7 @@ export function getProjects<T>(): T[] {
   return getAll<T>(StorageKeys.PROJECTS);
 }
 
-// Update getFurniturePresets to accept the Cabinet type
-export function getFurniturePresets<T extends { isPreset?: boolean }>(): T[] {
+// Fix: Update getFurniturePresets to correctly work with the Cabinet interface
+export function getFurniturePresets<T extends Cabinet>(): T[] {
   return getAll<T>(StorageKeys.CABINETS).filter(cabinet => cabinet.isPreset === true);
 }

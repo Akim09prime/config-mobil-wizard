@@ -460,8 +460,8 @@ const CabinetItems: React.FC = () => {
         materials: materialsArray
       });
 
-      // Update the cabinet in storage
-      update(StorageKeys.CABINETS, updatedCabinet.id, updatedCabinet);
+      // Update the cabinet in storage - Fix: remove the third argument
+      update(StorageKeys.CABINETS, updatedCabinet);
       toast({
         title: 'Succes',
         description: 'Corpul de mobilier a fost actualizat cu succes'

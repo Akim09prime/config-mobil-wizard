@@ -17,7 +17,7 @@ interface Cabinet {
   depth: number;
   price: number;
   image?: string | null;
-  isPreset?: boolean; // Added isPreset property to fix type errors
+  isPreset?: boolean;
   pieces?: {
     id: string;
     name: string;
