@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { StorageKeys, update, getById } from '@/services/storage';
+import { StorageKeys, update } from '@/services/storage';
 import { toast } from '@/components/ui/use-toast';
 
 interface EditProjectModalProps {
@@ -51,14 +52,14 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onPr
 
     try {
       const updatedProject = {
+        ...project,
         name: name.trim(),
         client: client.trim(),
         status: status,
         total: parseFloat(total) || 0,
-        cabinets: project.cabinets || []
       };
 
-      update(StorageKeys.PROJECTS, project.id, updatedProject);
+      update(StorageKeys.PROJECTS, updatedProject);
       
       toast({
         title: "Succes",

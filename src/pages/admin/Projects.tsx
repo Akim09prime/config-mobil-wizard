@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -81,20 +80,12 @@ const Projects: React.FC = () => {
   const confirmDelete = () => {
     if (projectToDelete) {
       try {
-        const success = remove(StorageKeys.PROJECTS, projectToDelete);
-        if (success) {
-          toast({
-            title: 'Succes',
-            description: 'Proiectul a fost șters cu succes'
-          });
-          loadProjects();
-        } else {
-          toast({
-            title: 'Eroare',
-            description: 'Nu s-a putut șterge proiectul',
-            variant: 'destructive'
-          });
-        }
+        remove(StorageKeys.PROJECTS, projectToDelete);
+        toast({
+          title: 'Succes',
+          description: 'Proiectul a fost șters cu succes'
+        });
+        loadProjects();
       } catch (error) {
         console.error('Error deleting project:', error);
         toast({
