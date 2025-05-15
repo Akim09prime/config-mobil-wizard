@@ -33,20 +33,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={redirectTo} />;
   }
   
-  // If user doesn't have the required role, redirect
-  if (!allowedRoles.includes(user.role)) {
-    // Redirect based on role
-    if (user.role === 'administrator') {
-      return <Navigate to="/admin/dashboard" />;
-    } else if (user.role === 'proiectant') {
-      return <Navigate to="/project" />;
-    } else {
-      return <Navigate to="/catalog" />;
-    }
+  // If user has the required role, render the children
+  if (allowedRoles.includes(user.role)) {
+    return <>{children}</>;
   }
   
-  // If authenticated and has correct role, render the children
-  return <>{children}</>;
+  // If user doesn't have the required role, redirect based on role
+  if (user.role === 'administrator') {
+    return <Navigate to="/admin/dashboard" />;
+  } else if (user.role === 'proiectant') {
+    return <Navigate to="/projects" />;
+  } else {
+    return <Navigate to="/catalog" />;
+  }
 };
 
 export default ProtectedRoute;

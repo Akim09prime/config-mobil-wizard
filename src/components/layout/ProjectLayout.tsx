@@ -21,6 +21,7 @@ import {
   User,
   List,
   FileText,
+  LayoutDashboard
 } from 'lucide-react';
 
 interface ProjectLayoutProps {
@@ -56,6 +57,13 @@ const ProjectLayout: React.FC<ProjectLayoutProps> = ({ children }) => {
         </div>
         
         <div className="flex items-center space-x-4">
+          {user?.role === 'administrator' && (
+            <Link to="/admin/dashboard" className="p-2 rounded-md hover:bg-muted flex items-center text-sm">
+              <LayoutDashboard size={18} className="mr-2" />
+              <span>Admin Dashboard</span>
+            </Link>
+          )}
+          
           <Link to="/projects" className="p-2 rounded-md hover:bg-muted flex items-center text-sm">
             <List size={18} className="mr-2" />
             <span>Proiectele mele</span>

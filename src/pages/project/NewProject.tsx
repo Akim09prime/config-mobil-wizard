@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import PresetSelector from '@/components/project/PresetSelector';
 import CabinetList from '@/components/project/CabinetList';
 import ProjectSummary from '@/components/project/ProjectSummary';
 import { ProjectProvider, useProject } from '@/contexts/ProjectContext';
+import ProjectLayout from "../../components/layout/ProjectLayout";
 
 interface Project {
   id: string;
@@ -235,11 +235,11 @@ const ProjectContent: React.FC = () => {
   );
 };
 
-const NewProject: React.FC = () => {
+const NewProject = () => {
   return (
-    <ProjectProvider>
+    <ProjectLayout>
       <ProjectContent />
-    </ProjectProvider>
+    </ProjectLayout>
   );
 };
 
