@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -461,6 +460,7 @@ const CabinetItems: React.FC = () => {
         materials: materialsArray
       });
 
+      // Update the cabinet in storage
       update(StorageKeys.CABINETS, updatedCabinet.id, updatedCabinet);
       toast({
         title: 'Succes',

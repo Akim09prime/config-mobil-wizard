@@ -44,11 +44,14 @@ export function getByName<T extends { name: string }>(key: StorageKeys, name: st
   }
 }
 
-// Added create function that was missing
-export function create<T>(key: StorageKeys, item: T): T {
+// Create function with proper type constraints
+export function create<T extends Record<string, any>>(key: StorageKeys, item: T): T {
   try {
     const items = getAll<T>(key);
-    const newItem = { ...item, id: item.hasOwnProperty('id') ? item.id : uuidv4() };
+    const newItem = { 
+      ...item, 
+      id: item.hasOwnProperty('id') ? item.id : uuidv4() 
+    };
     localStorage.setItem(key, JSON.stringify([...items, newItem]));
     return newItem;
   } catch (error) {
@@ -57,7 +60,7 @@ export function create<T>(key: StorageKeys, item: T): T {
   }
 }
 
-export function save<T>(key: StorageKeys, item: T): T {
+export function save<T extends Record<string, any>>(key: StorageKeys, item: T): T {
   try {
     const items = getAll<T>(key);
     const newItem = { ...item, id: uuidv4() };
@@ -69,7 +72,7 @@ export function save<T>(key: StorageKeys, item: T): T {
   }
 }
 
-// Fixed update function to take 2 parameters instead of 3
+// Update function with proper typings
 export function update<T extends { id: string }>(key: StorageKeys, item: T): T {
   try {
     const items = getAll<T>(key);
@@ -87,7 +90,7 @@ export function update<T extends { id: string }>(key: StorageKeys, item: T): T {
 export function remove(key: StorageKeys, id: string): boolean {
   try {
     const items = getAll(key);
-    const filteredItems = items.filter(item => item.id !== id);
+    const filteredItems = items.filter(item => (item as any).id !== id);
     localStorage.setItem(key, JSON.stringify(filteredItems));
     return true;
   } catch (error) {
@@ -96,7 +99,14 @@ export function remove(key: StorageKeys, id: string): boolean {
   }
 }
 
-export function getTaxonomies(): any {
+export interface Taxonomies {
+  categories: string[];
+  materialTypes: string[];
+  accessoryCategories: string[];
+  componentCategories: string[];
+}
+
+export function getTaxonomies(): Taxonomies {
   try {
     const taxonomies = localStorage.getItem(StorageKeys.TAXONOMIES);
     return taxonomies ? JSON.parse(taxonomies) : {
@@ -116,7 +126,7 @@ export function getTaxonomies(): any {
   }
 }
 
-export function saveTaxonomies(taxonomies: any): boolean {
+export function saveTaxonomies(taxonomies: Taxonomies): boolean {
   try {
     localStorage.setItem(StorageKeys.TAXONOMIES, JSON.stringify(taxonomies));
     return true;
@@ -126,11 +136,21 @@ export function saveTaxonomies(taxonomies: any): boolean {
   }
 }
 
-// Adding these aliases to match what's being imported
+// Add alias for updateTaxonomies
 export const updateTaxonomies = saveTaxonomies;
 
-// Adding missing functions for settings
-export function getSettings(): any {
+// Settings interface
+export interface Settings {
+  tva: number;
+  manopera: number;
+  transport: number;
+  adaos: number;
+  currency: string;
+  pdfFooter: string;
+}
+
+// Settings functions with proper typings
+export function getSettings(): Settings {
   try {
     const settings = localStorage.getItem('settings');
     return settings ? JSON.parse(settings) : {
@@ -154,7 +174,7 @@ export function getSettings(): any {
   }
 }
 
-export function updateSettings(settings: any): boolean {
+export function updateSettings(settings: Settings): boolean {
   try {
     localStorage.setItem('settings', JSON.stringify(settings));
     return true;
@@ -164,12 +184,11 @@ export function updateSettings(settings: any): boolean {
   }
 }
 
-// Adding missing functions for projects and presets
-export function getProjects() {
-  return getAll(StorageKeys.PROJECTS);
+// Projects and presets functions with proper typings
+export function getProjects<T>(): T[] {
+  return getAll<T>(StorageKeys.PROJECTS);
 }
 
-export function getFurniturePresets() {
-  return getAll(StorageKeys.CABINETS).filter(cabinet => cabinet.isPreset === true);
+export function getFurniturePresets<T extends { isPreset?: boolean }>(): T[] {
+  return getAll<T>(StorageKeys.CABINETS).filter(cabinet => cabinet.isPreset === true);
 }
-

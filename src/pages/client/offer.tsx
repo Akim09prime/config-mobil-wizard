@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { DndContext, useSensor, useSensors, PointerSensor, DragEndEvent } from '@dnd-kit/core';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
@@ -103,7 +102,7 @@ export default function ClientOffer() {
   useEffect(() => {
     const loadPresets = async () => {
       try {
-        const data = await getFurniturePresets();
+        const data = await getFurniturePresets<Cabinet>();
         setPresets(data);
       } catch (error) {
         console.error('Error loading presets:', error);

@@ -59,6 +59,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({ open, onClose, onPr
         total: parseFloat(total) || 0,
       };
 
+      // Fixed: update now takes only 2 parameters
       update(StorageKeys.PROJECTS, updatedProject);
       
       toast({

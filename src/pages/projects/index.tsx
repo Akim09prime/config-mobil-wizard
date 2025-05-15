@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -40,7 +39,7 @@ export default function ProjectsList() {
   const fetchProjects = async () => {
     setIsLoading(true);
     try {
-      const projectsData = await getProjects();
+      const projectsData = await getProjects<Project>();
       setProjects(projectsData);
     } catch (error) {
       console.error('Error fetching projects:', error);
