@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { DndContext, useSensor, useSensors, PointerSensor, DragEndEvent } from '@dnd-kit/core';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
@@ -12,6 +13,7 @@ import { toast } from '@/hooks/use-toast';
 import { getFurniturePresets } from '@/services/storage';
 import { calculateProjectMaterialTotal, calculateProjectAccessoryTotal } from '@/services/calculations';
 
+// Definim explicit tipul Cabinet pentru a include toate proprietățile necesare
 interface Cabinet {
   id: string;
   name: string;
@@ -19,11 +21,16 @@ interface Cabinet {
   height: number;
   depth: number;
   price: number;
-  material?: string;
-  accessories?: { id: string; name: string; price: number; quantity: number }[];
-  materials?: { id: string; name: string; quantity: number }[];
+  image?: string;
+  category?: string;
+  subcategory?: string;
+  zone?: string;
+  description?: string;
+  isPreset?: boolean;
   position?: { x: number; y: number };
   quantity?: number;
+  accessories?: { id: string; name: string; price: number; quantity: number }[];
+  materials?: { id: string; name: string; price?: number; quantity: number }[];
 }
 
 interface WallDimensions {
@@ -106,7 +113,11 @@ export default function ClientOffer() {
         setPresets(data);
       } catch (error) {
         console.error('Error loading presets:', error);
-        toast.error('Nu s-au putut încărca corpurile predefinite');
+        toast({
+          title: "Eroare",
+          description: "Nu s-au putut încărca corpurile predefinite",
+          variant: "destructive"
+        });
       }
     };
     
@@ -144,7 +155,10 @@ export default function ClientOffer() {
     };
     
     setSelectedCabinets([...selectedCabinets, newCabinet]);
-    toast.success(`${cabinet.name} a fost adăugat în proiect`);
+    toast({
+      title: "Succes",
+      description: `${cabinet.name} a fost adăugat în proiect`,
+    });
   };
 
   const handleDragEnd = useCallback((id: string, x: number, y: number) => {

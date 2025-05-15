@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PlusIcon, TrashIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { TaxonomySelect, SubcategorySelect } from '@/components/TaxonomySelect';
+import { TaxonomySelect, SubcategorySelect, SubcategoryPath } from '@/components/TaxonomySelect';
+import { findSubcategoryById, getTaxonomies } from '@/services/storage';
 
 interface MaterialsTabProps {
   selectedMaterial: string;
@@ -38,30 +39,110 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({
   const [materialSubcategory, setMaterialSubcategory] = useState<string>('');
   const [materialQuantity, setMaterialQuantity] = useState<string>('1');
   const [filteredMaterials, setFilteredMaterials] = useState<MaterialItem[]>(materials);
+  const [subcategoryPath, setSubcategoryPath] = useState<{id: string; name: string}[]>([]);
+  const [currentSubcategoryId, setCurrentSubcategoryId] = useState<string | undefined>(undefined);
+  
+  // Reset filtered materials when materials change
+  useEffect(() => {
+    if (materialCategory) {
+      filterMaterialsByCategory(materialCategory);
+    } else {
+      setFilteredMaterials(materials);
+    }
+  }, [materials]);
   
   // Filter materials based on selected category and subcategory
   const handleCategoryChange = (category: string) => {
     setMaterialCategory(category);
     setMaterialSubcategory('');
+    setSubcategoryPath([]);
+    setCurrentSubcategoryId(undefined);
     
-    if (category) {
+    filterMaterialsByCategory(category);
+  };
+  
+  const filterMaterialsByCategory = (category: string) => {
+    if (category && category !== 'all') {
       setFilteredMaterials(materials.filter(m => m.category === category));
+    } else {
+      setFilteredMaterials(materials);
+    }
+  }
+  
+  const handleSubcategoryChange = (subcategory: string) => {
+    setMaterialSubcategory(subcategory);
+    
+    if (subcategory && subcategory !== 'all') {
+      setFilteredMaterials(
+        materials.filter(m => {
+          if (materialCategory && m.category !== materialCategory) {
+            return false;
+          }
+          return m.subcategory === subcategory;
+        })
+      );
+    } else if (materialCategory && materialCategory !== 'all') {
+      filterMaterialsByCategory(materialCategory);
     } else {
       setFilteredMaterials(materials);
     }
   };
   
-  const handleSubcategoryChange = (subcategory: string) => {
-    setMaterialSubcategory(subcategory);
+  const handleSubcategorySelect = (subcategoryId: string) => {
+    // Find the subcategory to add it to the path
+    const taxonomies = getTaxonomies();
+    const category = taxonomies.materialTypes.find(cat => cat.name === materialCategory);
     
-    if (subcategory) {
-      setFilteredMaterials(
-        materials.filter(m => m.category === materialCategory && m.subcategory === subcategory)
-      );
-    } else if (materialCategory) {
-      setFilteredMaterials(materials.filter(m => m.category === materialCategory));
+    if (category) {
+      let subcategory;
+      
+      if (currentSubcategoryId) {
+        // Find the parent subcategory first
+        const parentSubcategory = findSubcategoryById(category.subcategories, currentSubcategoryId);
+        if (parentSubcategory && parentSubcategory.subcategories) {
+          subcategory = parentSubcategory.subcategories.find(sub => sub.id === subcategoryId);
+        }
+      } else {
+        // Look for the subcategory at the top level
+        subcategory = category.subcategories.find(sub => sub.id === subcategoryId);
+      }
+      
+      if (subcategory) {
+        // Add to the subcategory path
+        setSubcategoryPath([
+          ...subcategoryPath,
+          { id: subcategoryId, name: subcategory.name }
+        ]);
+        setCurrentSubcategoryId(subcategoryId);
+      }
+    }
+  };
+  
+  const navigateSubcategoryPath = (index: number) => {
+    if (index === -1) {
+      // Navigate to category root
+      setSubcategoryPath([]);
+      setCurrentSubcategoryId(undefined);
+      setMaterialSubcategory('');
+      filterMaterialsByCategory(materialCategory);
     } else {
-      setFilteredMaterials(materials);
+      // Navigate to specific subcategory in the path
+      const newPath = subcategoryPath.slice(0, index + 1);
+      setSubcategoryPath(newPath);
+      setCurrentSubcategoryId(newPath[newPath.length - 1].id);
+      
+      // Update the filter to show materials in this subcategory
+      const subcategoryName = newPath[newPath.length - 1].name;
+      setMaterialSubcategory(subcategoryName);
+      
+      setFilteredMaterials(
+        materials.filter(m => {
+          if (materialCategory && m.category !== materialCategory) {
+            return false;
+          }
+          return m.subcategory === subcategoryName;
+        })
+      );
     }
   };
   
@@ -102,9 +183,20 @@ const MaterialsTab: React.FC<MaterialsTabProps> = ({
             onChange={handleSubcategoryChange}
             placeholder={materialCategory ? "Toate subcategoriile" : "Selectați prima dată o categorie"}
             disabled={!materialCategory}
+            parentSubcategoryId={currentSubcategoryId}
+            onSubcategorySelect={handleSubcategorySelect}
           />
         </div>
       </div>
+      
+      {materialCategory && subcategoryPath.length > 0 && (
+        <SubcategoryPath
+          type="materialTypes"
+          categoryName={materialCategory}
+          subcategoryPath={subcategoryPath}
+          onNavigate={navigateSubcategoryPath}
+        />
+      )}
       
       <div className="space-y-2">
         <Label htmlFor="material" className="mb-2 block">Selectare Material</Label>

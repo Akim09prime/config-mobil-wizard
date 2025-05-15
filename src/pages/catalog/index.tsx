@@ -1,22 +1,30 @@
 
-// Update the file to ensure type compatibility with Cabinet interface
-// This file had errors related to the Cabinet type not having materials/accessories properties
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { StorageKeys, getAll } from '@/services/storage';
+import { StorageKeys, getAll, findSubcategoryById, getTaxonomies } from '@/services/storage';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Badge } from '@/components/ui/badge';
 import { SearchIcon, XIcon } from 'lucide-react';
+import { TaxonomySelect, SubcategorySelect, SubcategoryPath } from '@/components/TaxonomySelect';
+import { toast } from '@/hooks/use-toast';
 
 // Extended Cabinet interface with all needed properties
-interface ExtendedCabinet extends Omit<Cabinet, 'accessories' | 'materials'> {
+interface Cabinet {
+  id: string;
+  name: string;
+  width: number;
+  height: number;
+  depth: number;
+  price: number;
+  image?: string;
+  category?: string;
+  subcategory?: string;
   zone?: string;
   description?: string;
   accessories?: {
@@ -29,26 +37,29 @@ interface ExtendedCabinet extends Omit<Cabinet, 'accessories' | 'materials'> {
     id: string;
     name: string;
     quantity: number;
-    price: number;
+    price?: number;
   }[];
 }
 
 const CatalogPage: React.FC = () => {
-  const [cabinets, setCabinets] = useState<ExtendedCabinet[]>([]);
-  const [filteredCabinets, setFilteredCabinets] = useState<ExtendedCabinet[]>([]);
+  const [cabinets, setCabinets] = useState<Cabinet[]>([]);
+  const [filteredCabinets, setFilteredCabinets] = useState<Cabinet[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('all');
   const [selectedZone, setSelectedZone] = useState('all');
   const [categories, setCategories] = useState<string[]>([]);
   const [zones, setZones] = useState<string[]>([]);
-  const [selectedCabinet, setSelectedCabinet] = useState<ExtendedCabinet | null>(null);
+  const [selectedCabinet, setSelectedCabinet] = useState<Cabinet | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [subcategoryPath, setSubcategoryPath] = useState<{id: string; name: string}[]>([]);
+  const [currentSubcategoryId, setCurrentSubcategoryId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const loadCabinets = async () => {
       try {
-        const loadedCabinets = getAll<ExtendedCabinet>(StorageKeys.CABINETS) || [];
+        const loadedCabinets = getAll<Cabinet>(StorageKeys.CABINETS) || [];
         
         setCabinets(loadedCabinets);
         setFilteredCabinets(loadedCabinets);
@@ -71,6 +82,10 @@ const CatalogPage: React.FC = () => {
 
   useEffect(() => {
     // Apply filters when any filter criteria changes
+    applyFilters();
+  }, [searchTerm, selectedCategory, selectedSubcategory, selectedZone, cabinets]);
+  
+  const applyFilters = () => {
     let results = [...cabinets];
     
     // Apply search term filter
@@ -85,6 +100,11 @@ const CatalogPage: React.FC = () => {
     // Apply category filter
     if (selectedCategory !== 'all') {
       results = results.filter(cabinet => cabinet.category === selectedCategory);
+      
+      // Apply subcategory filter if a category is selected
+      if (selectedSubcategory !== 'all') {
+        results = results.filter(cabinet => cabinet.subcategory === selectedSubcategory);
+      }
     }
     
     // Apply zone filter
@@ -93,9 +113,62 @@ const CatalogPage: React.FC = () => {
     }
     
     setFilteredCabinets(results);
-  }, [searchTerm, selectedCategory, selectedZone, cabinets]);
+  };
 
-  const handleCabinetClick = (cabinet: ExtendedCabinet) => {
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setSelectedSubcategory('all');
+    setSubcategoryPath([]);
+    setCurrentSubcategoryId(undefined);
+  };
+  
+  const handleSubcategorySelect = (subcategoryId: string) => {
+    // Find the subcategory to add it to the path
+    const taxonomies = getTaxonomies();
+    const category = taxonomies.categories.find(cat => cat.name === selectedCategory);
+    
+    if (category) {
+      let subcategory;
+      
+      if (currentSubcategoryId) {
+        // Find the parent subcategory first
+        const parentSubcategory = findSubcategoryById(category.subcategories, currentSubcategoryId);
+        if (parentSubcategory && parentSubcategory.subcategories) {
+          subcategory = parentSubcategory.subcategories.find(sub => sub.id === subcategoryId);
+        }
+      } else {
+        // Look for the subcategory at the top level
+        subcategory = category.subcategories.find(sub => sub.id === subcategoryId);
+      }
+      
+      if (subcategory) {
+        // Add to the subcategory path
+        setSubcategoryPath([
+          ...subcategoryPath,
+          { id: subcategoryId, name: subcategory.name }
+        ]);
+        setCurrentSubcategoryId(subcategoryId);
+        setSelectedSubcategory(subcategory.name);
+      }
+    }
+  };
+  
+  const navigateSubcategoryPath = (index: number) => {
+    if (index === -1) {
+      // Navigate to category root
+      setSubcategoryPath([]);
+      setCurrentSubcategoryId(undefined);
+      setSelectedSubcategory('all');
+    } else {
+      // Navigate to specific subcategory in the path
+      const newPath = subcategoryPath.slice(0, index + 1);
+      setSubcategoryPath(newPath);
+      setCurrentSubcategoryId(newPath[newPath.length - 1].id);
+      setSelectedSubcategory(newPath[newPath.length - 1].name);
+    }
+  };
+
+  const handleCabinetClick = (cabinet: Cabinet) => {
     setSelectedCabinet(cabinet);
     setIsDetailsOpen(true);
   };
@@ -104,12 +177,12 @@ const CatalogPage: React.FC = () => {
     return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(price);
   };
 
-  const getTotalMaterialsPrice = (cabinet: ExtendedCabinet) => {
+  const getTotalMaterialsPrice = (cabinet: Cabinet) => {
     if (!cabinet.materials || cabinet.materials.length === 0) return 0;
     return cabinet.materials.reduce((sum, material) => sum + (material.price || 0) * (material.quantity || 1), 0);
   };
 
-  const getTotalAccessoriesPrice = (cabinet: ExtendedCabinet) => {
+  const getTotalAccessoriesPrice = (cabinet: Cabinet) => {
     if (!cabinet.accessories || cabinet.accessories.length === 0) return 0;
     return cabinet.accessories.reduce((sum, accessory) => sum + (accessory.price || 0) * (accessory.quantity || 1), 0);
   };
@@ -157,22 +230,13 @@ const CatalogPage: React.FC = () => {
           
           <div>
             <Label htmlFor="category">Categorie</Label>
-            <Select 
-              value={selectedCategory} 
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger id="category">
-                <SelectValue placeholder="Selectează categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toate categoriile</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <TaxonomySelect
+              type="categories"
+              value={selectedCategory}
+              onChange={handleCategoryChange}
+              placeholder="Toate categoriile"
+              includeAllOption={true}
+            />
           </div>
           
           <div>
@@ -195,6 +259,30 @@ const CatalogPage: React.FC = () => {
             </Select>
           </div>
         </div>
+        
+        {selectedCategory !== 'all' && (
+          <div className="mt-4">
+            <Label htmlFor="subcategory">Subcategorie</Label>
+            <SubcategorySelect
+              type="categories"
+              categoryName={selectedCategory}
+              value={selectedSubcategory}
+              onChange={setSelectedSubcategory}
+              placeholder="Toate subcategoriile"
+              parentSubcategoryId={currentSubcategoryId}
+              onSubcategorySelect={handleSubcategorySelect}
+            />
+            
+            {subcategoryPath.length > 0 && (
+              <SubcategoryPath
+                type="categories"
+                categoryName={selectedCategory}
+                subcategoryPath={subcategoryPath}
+                onNavigate={navigateSubcategoryPath}
+              />
+            )}
+          </div>
+        )}
       </div>
       
       {/* Results */}
@@ -237,7 +325,10 @@ const CatalogPage: React.FC = () => {
                     {cabinet.category && (
                       <Badge variant="secondary">{cabinet.category}</Badge>
                     )}
-                    {cabinet.zone && (
+                    {cabinet.subcategory && (
+                      <Badge variant="outline">{cabinet.subcategory}</Badge>
+                    )}
+                    {cabinet.zone && cabinet.zone !== cabinet.category && (
                       <Badge variant="outline">{cabinet.zone}</Badge>
                     )}
                   </div>
@@ -298,6 +389,13 @@ const CatalogPage: React.FC = () => {
                     <h3 className="font-semibold text-sm">Categorie</h3>
                     <p>{selectedCabinet.category || 'Necategorizat'}</p>
                   </div>
+                  
+                  {selectedCabinet.subcategory && (
+                    <div>
+                      <h3 className="font-semibold text-sm">Subcategorie</h3>
+                      <p>{selectedCabinet.subcategory}</p>
+                    </div>
+                  )}
                   
                   <div>
                     <h3 className="font-semibold text-sm">Zonă</h3>

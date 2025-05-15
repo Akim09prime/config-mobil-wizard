@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Category, getTaxonomies } from '@/services/storage';
+import { Category, Subcategory, getTaxonomies, findSubcategoryById } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
 
 interface TaxonomySelectProps {
@@ -93,6 +93,7 @@ export const SubcategorySelect: React.FC<{
   disabled?: boolean;
   parentSubcategoryId?: string;
   includeAllOption?: boolean;
+  onSubcategorySelect?: (subcategoryId: string) => void;
 }> = ({ 
   type, 
   categoryName, 
@@ -101,10 +102,12 @@ export const SubcategorySelect: React.FC<{
   placeholder = 'Selectează...', 
   disabled = false,
   parentSubcategoryId,
-  includeAllOption = true
+  includeAllOption = true,
+  onSubcategorySelect
 }) => {
-  const [subcategories, setSubcategories] = useState<{ id: string; name: string; image?: string; }[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [subcategoryIds, setSubcategoryIds] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const loadSubcategories = async () => {
@@ -116,6 +119,8 @@ export const SubcategorySelect: React.FC<{
 
       try {
         const taxonomiesData = getTaxonomies();
+        const idMap: Record<string, string> = {};
+        
         if (taxonomiesData && taxonomiesData[type]) {
           const category = taxonomiesData[type].find(
             (cat: Category) => cat.name === categoryName
@@ -124,27 +129,40 @@ export const SubcategorySelect: React.FC<{
           if (category) {
             if (parentSubcategoryId) {
               // Find nested subcategories
-              const findNestedSubcategories = (subcats: any[], parentId: string): any[] => {
-                for (const subcat of subcats) {
-                  if (subcat.id === parentId) {
-                    return subcat.subcategories || [];
-                  }
-                  if (subcat.subcategories && subcat.subcategories.length > 0) {
-                    const found = findNestedSubcategories(subcat.subcategories, parentId);
-                    if (found.length > 0) return found;
-                  }
-                }
-                return [];
-              };
+              let parent: Subcategory | null = null;
               
-              const nestedSubcategories = findNestedSubcategories(
-                category.subcategories || [],
-                parentSubcategoryId
-              );
-              setSubcategories(nestedSubcategories);
+              // First check if parentSubcategoryId is directly under the category
+              parent = category.subcategories.find(
+                sub => sub.id === parentSubcategoryId
+              ) || null;
+              
+              // If not found, search deeper in the hierarchy
+              if (!parent) {
+                parent = findSubcategoryById(category.subcategories, parentSubcategoryId);
+              }
+              
+              if (parent) {
+                const subs = parent.subcategories || [];
+                setSubcategories(subs);
+                
+                // Create name to id mapping
+                subs.forEach(sub => {
+                  idMap[sub.name] = sub.id;
+                });
+                setSubcategoryIds(idMap);
+              } else {
+                setSubcategories([]);
+              }
             } else {
               // Get top-level subcategories
-              setSubcategories(category.subcategories || []);
+              const subs = category.subcategories || [];
+              setSubcategories(subs);
+              
+              // Create name to id mapping
+              subs.forEach(sub => {
+                idMap[sub.name] = sub.id;
+              });
+              setSubcategoryIds(idMap);
             }
           } else {
             console.warn(`No subcategories found for category: ${categoryName} in type: ${type}`);
@@ -166,6 +184,18 @@ export const SubcategorySelect: React.FC<{
     loadSubcategories();
   }, [type, categoryName, parentSubcategoryId]);
 
+  const handleValueChange = (newValue: string) => {
+    onChange(newValue);
+    
+    // If there's a subcategory selection handler, send the subcategory ID
+    if (onSubcategorySelect && newValue !== 'all' && newValue !== 'no-subcategories') {
+      const subcategoryId = subcategoryIds[newValue];
+      if (subcategoryId) {
+        onSubcategorySelect(subcategoryId);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <Select disabled value={value} onValueChange={onChange}>
@@ -177,7 +207,7 @@ export const SubcategorySelect: React.FC<{
   }
 
   return (
-    <Select disabled={disabled} value={value} onValueChange={onChange}>
+    <Select disabled={disabled} value={value} onValueChange={handleValueChange}>
       <SelectTrigger>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
@@ -198,5 +228,38 @@ export const SubcategorySelect: React.FC<{
         )}
       </SelectContent>
     </Select>
+  );
+};
+
+// New component to display a nested subcategory path with breadcrumbs
+export const SubcategoryPath: React.FC<{
+  type: 'categories' | 'accessoryCategories' | 'materialTypes' | 'componentCategories';
+  categoryName: string;
+  subcategoryPath: {id: string; name: string}[];
+  onNavigate: (index: number) => void;
+}> = ({ type, categoryName, subcategoryPath, onNavigate }) => {
+  if (!categoryName) return null;
+  
+  return (
+    <div className="flex items-center flex-wrap gap-1 text-sm mb-4">
+      <span 
+        className="cursor-pointer hover:underline font-medium"
+        onClick={() => onNavigate(-1)}
+      >
+        {categoryName}
+      </span>
+      
+      {subcategoryPath.map((item, index) => (
+        <React.Fragment key={item.id}>
+          <span className="text-muted-foreground">/</span>
+          <span 
+            className={`cursor-pointer hover:underline ${index === subcategoryPath.length - 1 ? 'font-medium' : ''}`}
+            onClick={() => onNavigate(index)}
+          >
+            {item.name}
+          </span>
+        </React.Fragment>
+      ))}
+    </div>
   );
 };

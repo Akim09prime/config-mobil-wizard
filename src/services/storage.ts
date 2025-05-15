@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 
 export enum StorageKeys {
@@ -153,6 +154,153 @@ export function saveTaxonomies(taxonomies: Taxonomies): boolean {
 // Add alias for updateTaxonomies
 export const updateTaxonomies = saveTaxonomies;
 
+// Recursive function to find a subcategory by ID (for deep nested structures)
+export function findSubcategoryById(
+  categories: (Category | Subcategory)[],
+  subcategoryId: string
+): Subcategory | null {
+  for (const category of categories) {
+    if (category.id === subcategoryId) {
+      return category as Subcategory;
+    }
+    
+    if (category.subcategories && category.subcategories.length > 0) {
+      const found = findSubcategoryById(category.subcategories, subcategoryId);
+      if (found) return found;
+    }
+  }
+  
+  return null;
+}
+
+// Recursive function to add a subcategory to a parent (category or subcategory)
+export function addSubcategoryToParent(
+  categories: (Category | Subcategory)[],
+  parentId: string,
+  newSubcategory: Subcategory
+): boolean {
+  for (let i = 0; i < categories.length; i++) {
+    if (categories[i].id === parentId) {
+      if (!categories[i].subcategories) {
+        categories[i].subcategories = [];
+      }
+      categories[i].subcategories.push(newSubcategory);
+      return true;
+    }
+    
+    if (categories[i].subcategories && categories[i].subcategories.length > 0) {
+      const added = addSubcategoryToParent(
+        categories[i].subcategories,
+        parentId,
+        newSubcategory
+      );
+      if (added) return true;
+    }
+  }
+  
+  return false;
+}
+
+// Function to find a category by ID in any taxonomy type
+export function findCategoryById(
+  taxonomies: Taxonomies,
+  categoryId: string
+): { category: Category | null; taxonomyType: keyof Taxonomies | null } {
+  const taxonomyTypes: (keyof Taxonomies)[] = [
+    'categories',
+    'materialTypes',
+    'accessoryCategories',
+    'componentCategories'
+  ];
+  
+  for (const type of taxonomyTypes) {
+    const category = taxonomies[type].find(cat => cat.id === categoryId);
+    if (category) {
+      return { category, taxonomyType: type };
+    }
+    
+    // Search in subcategories
+    for (const cat of taxonomies[type]) {
+      const subcategory = findSubcategoryById(cat.subcategories || [], categoryId);
+      if (subcategory) {
+        return { 
+          category: subcategory as unknown as Category, 
+          taxonomyType: type 
+        };
+      }
+    }
+  }
+  
+  return { category: null, taxonomyType: null };
+}
+
+// Function to get all items in a specific category (including subcategories)
+export function getAllItemsInCategory(
+  taxonomyType: keyof Taxonomies,
+  categoryName: string,
+  includeSubcategories: boolean = true
+): any[] {
+  const taxonomies = getTaxonomies();
+  const category = taxonomies[taxonomyType].find(cat => cat.name === categoryName);
+  
+  if (!category) {
+    return [];
+  }
+  
+  let storageKey: StorageKeys;
+  
+  if (taxonomyType === 'materialTypes') {
+    storageKey = StorageKeys.MATERIALS;
+  } else if (taxonomyType === 'accessoryCategories') {
+    storageKey = StorageKeys.ACCESSORIES;
+  } else if (taxonomyType === 'componentCategories') {
+    storageKey = StorageKeys.COMPONENTS;
+  } else {
+    storageKey = StorageKeys.CABINETS;
+  }
+  
+  const items = getAll(storageKey);
+  
+  // Get top-level category items
+  const directItems = items.filter(
+    (item: any) => item.category === categoryName
+  );
+  
+  if (!includeSubcategories || !category.subcategories) {
+    return directItems;
+  }
+  
+  // Get subcategory items recursively
+  const subcategoryItems = getSubcategoryItems(
+    category.subcategories,
+    items,
+    []
+  );
+  
+  return [...directItems, ...subcategoryItems];
+}
+
+// Helper function to get items from subcategories recursively
+function getSubcategoryItems(
+  subcategories: Subcategory[],
+  allItems: any[],
+  result: any[] = []
+): any[] {
+  subcategories.forEach(subcategory => {
+    const subcategoryItems = allItems.filter(
+      (item: any) => item.subcategory === subcategory.name
+    );
+    
+    result.push(...subcategoryItems);
+    
+    if (subcategory.subcategories && subcategory.subcategories.length > 0) {
+      getSubcategoryItems(subcategory.subcategories, allItems, result);
+    }
+  });
+  
+  return result;
+}
+
 // Export/import functions for category-specific data
 export function exportCategoryData(taxonomyType: keyof Taxonomies, categoryName: string): string {
   try {
@@ -163,22 +311,8 @@ export function exportCategoryData(taxonomyType: keyof Taxonomies, categoryName:
       throw new Error(`Category ${categoryName} not found`);
     }
     
-    // Find all items with this category
-    let items: any[] = [];
-    
-    if (taxonomyType === 'materialTypes') {
-      items = getAll(StorageKeys.MATERIALS).filter(
-        (item: any) => item.category === categoryName
-      );
-    } else if (taxonomyType === 'accessoryCategories') {
-      items = getAll(StorageKeys.ACCESSORIES).filter(
-        (item: any) => item.category === categoryName
-      );
-    } else if (taxonomyType === 'componentCategories') {
-      items = getAll(StorageKeys.COMPONENTS).filter(
-        (item: any) => item.category === categoryName
-      );
-    }
+    // Find all items with this category and its subcategories
+    const items = getAllItemsInCategory(taxonomyType, categoryName, true);
     
     return JSON.stringify({
       category,
@@ -302,7 +436,7 @@ export function getProjects<T>(): T[] {
   return getAll<T>(StorageKeys.PROJECTS);
 }
 
-// Get furniture presets - fix to use a proper interface that matches what's needed in offer.tsx
+// Get furniture presets
 export function getFurniturePresets<T>(): T[] {
   return getAll<T>(StorageKeys.CABINETS).filter(cabinet => (cabinet as any).isPreset === true);
 }
