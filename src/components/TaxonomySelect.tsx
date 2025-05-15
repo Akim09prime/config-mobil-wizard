@@ -5,7 +5,7 @@ import { getTaxonomies } from '@/services/storage';
 import { toast } from '@/hooks/use-toast';
 
 interface TaxonomySelectProps {
-  type: 'categories' | 'accessoryCategories' | 'componentCategories';
+  type: 'categories' | 'accessoryCategories' | 'materialTypes' | 'componentCategories';
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -28,6 +28,9 @@ export const TaxonomySelect: React.FC<TaxonomySelectProps> = ({
         const taxonomiesData = getTaxonomies();
         if (taxonomiesData && taxonomiesData[type]) {
           setCategories(taxonomiesData[type]);
+        } else {
+          console.warn(`No taxonomies found for type: ${type}`);
+          setCategories([]);
         }
         setLoading(false);
       } catch (error) {
@@ -60,6 +63,9 @@ export const TaxonomySelect: React.FC<TaxonomySelectProps> = ({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
+        {value !== '' && (
+          <SelectItem value="">Toate categoriile</SelectItem>
+        )}
         {categories.length === 0 ? (
           <SelectItem value="no-options" disabled>
             Nu există opțiuni
@@ -77,7 +83,7 @@ export const TaxonomySelect: React.FC<TaxonomySelectProps> = ({
 };
 
 export const SubcategorySelect: React.FC<{
-  type: 'categories' | 'accessoryCategories' | 'componentCategories';
+  type: 'categories' | 'accessoryCategories' | 'materialTypes' | 'componentCategories';
   categoryName: string;
   value: string;
   onChange: (value: string) => void;
@@ -105,6 +111,7 @@ export const SubcategorySelect: React.FC<{
           if (category && category.subcategories) {
             setSubcategories(category.subcategories);
           } else {
+            console.warn(`No subcategories found for category: ${categoryName} in type: ${type}`);
             setSubcategories([]);
           }
         }
@@ -139,6 +146,9 @@ export const SubcategorySelect: React.FC<{
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
+        {value !== '' && (
+          <SelectItem value="">Toate subcategoriile</SelectItem>
+        )}
         {subcategories.length === 0 ? (
           <SelectItem value="no-subcategories" disabled>
             Nu există subcategorii

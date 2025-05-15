@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { MaterialItem, AccessoryItem, calculatePieceCost, calculateHingeCost, calculateAccessoryCost } from '@/services/calculations';
 import { getAll, StorageKeys, getTaxonomies } from '@/services/storage';
 import { normalizeCabinet } from '@/utils/cabinetHelpers';
@@ -67,6 +67,7 @@ const defaultCabinet: Cabinet = {
   depth: 560,
   pieces: [],
   accessories: [],
+  materials: [],
   totalCost: 0,
   price: 0,
   image: null
@@ -83,10 +84,12 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
 }) => {
   const [cabinet, setCabinet] = useState<Cabinet>({
     ...defaultCabinet,
-    ...initialCabinet
+    ...initialCabinet,
+    materials: initialCabinet.materials || [],
+    accessories: initialCabinet.accessories || []
   });
-  const [materials, setMaterials] = useState<MaterialItem[]>([]);
-  const [accessories, setAccessories] = useState<AccessoryItem[]>([]);
+  const [allMaterials, setAllMaterials] = useState<MaterialItem[]>([]);
+  const [allAccessories, setAllAccessories] = useState<AccessoryItem[]>([]);
   const [categories, setCategories] = useState<Taxonomy['categories']>([]);
   const [selectedMaterial, setSelectedMaterial] = useState<string>('');
   const [selectedAccessories, setSelectedAccessories] = useState<Record<string, boolean>>({});
@@ -109,14 +112,14 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
       const taxonomiesData = getTaxonomies();
       
       if (materialsData?.length > 0) {
-        setMaterials(materialsData);
+        setAllMaterials(materialsData);
         if (!selectedMaterial && materialsData[0]) {
           setSelectedMaterial(materialsData[0].id);
         }
       }
       
       if (accessoriesData?.length > 0) {
-        setAccessories(accessoriesData);
+        setAllAccessories(accessoriesData);
         
         // Initialize selected states for accessories
         const initialSelected: Record<string, boolean> = {};
@@ -135,7 +138,7 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
           
           initialCabinet.accessories.forEach(acc => {
             selected[acc.id] = true;
-            quantities[acc.id] = acc.quantity;
+            quantities[acc.id] = acc.quantity || 1;
           });
           
           setSelectedAccessories(selected);
@@ -194,25 +197,85 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
     }));
   };
 
+  // Add material to cabinet
+  const addMaterial = (id: string, quantity: number) => {
+    const material = allMaterials.find(m => m.id === id);
+    if (!material) return;
+
+    setCabinet(prev => {
+      // Check if material already exists
+      const existingMaterialIndex = prev.materials ? 
+        prev.materials.findIndex(m => m.id === id) : -1;
+
+      let updatedMaterials = prev.materials ? [...prev.materials] : [];
+      
+      if (existingMaterialIndex >= 0) {
+        // Update quantity if material already exists
+        updatedMaterials[existingMaterialIndex] = {
+          ...updatedMaterials[existingMaterialIndex],
+          quantity: (updatedMaterials[existingMaterialIndex].quantity || 0) + quantity
+        };
+      } else {
+        // Add new material
+        updatedMaterials.push({
+          id: material.id,
+          name: material.name,
+          quantity
+        });
+      }
+
+      return {
+        ...prev,
+        materials: updatedMaterials
+      };
+    });
+
+    toast({
+      title: 'Material adăugat',
+      description: `${material.name} a fost adăugat la corp`
+    });
+  };
+
+  // Remove material from cabinet
+  const removeMaterial = (id: string) => {
+    setCabinet(prev => ({
+      ...prev,
+      materials: prev.materials ? prev.materials.filter(m => m.id !== id) : []
+    }));
+  };
+
   // Calculate cabinet cost
   const calculateCabinetCost = (): number => {
     // Material costs based on cabinet dimensions
     let materialCost = 0;
-    const mainMaterial = materials.find(m => m.id === selectedMaterial);
     
-    if (mainMaterial) {
-      // Simple calculation for demo - in real app would calculate each piece
-      const { width, height, depth } = cabinet.dimensions;
-      
-      // Base: bottom, top, left, right, back
-      materialCost += calculatePieceCost(mainMaterial, { width, height: depth }, 1); // bottom
-      materialCost += calculatePieceCost(mainMaterial, { width, height: depth }, 1); // top
-      materialCost += calculatePieceCost(mainMaterial, { width: depth, height }, 2); // sides
-      materialCost += calculatePieceCost(mainMaterial, { width, height }, 1); // back
+    // Calculate cost for all selected materials
+    if (cabinet.materials && cabinet.materials.length > 0) {
+      cabinet.materials.forEach(cabMaterial => {
+        const material = allMaterials.find(m => m.id === cabMaterial.id);
+        if (material) {
+          const { width, height, depth } = cabinet.dimensions;
+          const qty = cabMaterial.quantity || 1;
+          
+          // Simple cost calculation for demonstration
+          const areaCost = calculatePieceCost(material, { width, height: depth }, qty);
+          materialCost += areaCost;
+        }
+      });
+    } else {
+      // Fallback to selected material if no materials in cabinet
+      const mainMaterial = allMaterials.find(m => m.id === selectedMaterial);
+      if (mainMaterial) {
+        const { width, height, depth } = cabinet.dimensions;
+        materialCost += calculatePieceCost(mainMaterial, { width, height: depth }, 1); // bottom
+        materialCost += calculatePieceCost(mainMaterial, { width, height: depth }, 1); // top
+        materialCost += calculatePieceCost(mainMaterial, { width: depth, height }, 2); // sides
+        materialCost += calculatePieceCost(mainMaterial, { width, height }, 1); // back
+      }
     }
     
     // Accessory costs
-    const selectedAccessoriesArray = accessories
+    const selectedAccessoriesArray = allAccessories
       .filter(acc => selectedAccessories[acc.id])
       .map(acc => ({ 
         ...acc, 
@@ -257,7 +320,7 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
     }
     
     // Create final cabinet object with normalized values
-    const selectedAccessoriesArray = accessories
+    const selectedAccessoriesArray = allAccessories
       .filter(acc => selectedAccessories[acc.id])
       .map(acc => ({ 
         id: acc.id, 
@@ -266,9 +329,23 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
         price: acc.price
       }));
     
+    // Use existing materials or create from selected material
+    let finalMaterials = cabinet.materials && cabinet.materials.length > 0 ? cabinet.materials : [];
+    if (finalMaterials.length === 0 && selectedMaterial) {
+      const material = allMaterials.find(m => m.id === selectedMaterial);
+      if (material) {
+        finalMaterials = [{
+          id: material.id,
+          name: material.name,
+          quantity: 1
+        }];
+      }
+    }
+    
     let finalCabinet: Cabinet = {
       ...cabinet,
       accessories: selectedAccessoriesArray,
+      materials: finalMaterials,
       totalCost: calculateCabinetCost(),
       // Ensure top-level dimension properties
       width: cabinet.dimensions.width,
@@ -339,15 +416,18 @@ const CabinetConfigurator: React.FC<CabinetConfiguratorProps> = ({
             <TabsContent value="materials" className="space-y-4 pt-4">
               <MaterialsTab
                 selectedMaterial={selectedMaterial}
-                materials={materials}
+                materials={allMaterials}
                 onMaterialChange={setSelectedMaterial}
                 cabinetDimensions={cabinet.dimensions}
+                selectedMaterials={cabinet.materials}
+                onAddMaterial={addMaterial}
+                onRemoveMaterial={removeMaterial}
               />
             </TabsContent>
             
             <TabsContent value="accessories" className="space-y-4 pt-4">
               <AccessoriesTab
-                accessories={accessories}
+                accessories={allAccessories}
                 selectedAccessories={selectedAccessories}
                 accessoryQuantities={accessoryQuantities}
                 onToggleAccessory={toggleAccessory}

@@ -4,12 +4,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StorageKeys, getAll, remove } from '@/services/storage';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import AddProjectModal from '@/components/modals/AddProjectModal';
 import EditProjectModal from '@/components/modals/EditProjectModal';
+import { useNavigate } from 'react-router-dom';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 
 // Using the global Cabinet interface defined in vite-env.d.ts
 interface Project {
@@ -23,6 +24,7 @@ interface Project {
 }
 
 const Projects: React.FC = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
@@ -52,6 +54,10 @@ const Projects: React.FC = () => {
 
   const handleAddProject = () => {
     setIsAddModalOpen(true);
+  };
+  
+  const handleCreateNewProject = () => {
+    navigate('/projects/new');
   };
 
   const handleEditProject = (id: string) => {
@@ -131,10 +137,16 @@ const Projects: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Proiecte</h1>
-        <Button onClick={handleAddProject} className="flex items-center">
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Adaugă Proiect
-        </Button>
+        <div className="flex space-x-3">
+          <Button onClick={handleCreateNewProject} className="flex items-center">
+            <PlusIcon className="mr-2 h-4 w-4" />
+            Proiect Nou cu Corpuri
+          </Button>
+          <Button onClick={handleAddProject} variant="outline" className="flex items-center">
+            <PlusIcon className="mr-2 h-4 w-4" />
+            Proiect Simplu
+          </Button>
+        </div>
       </div>
       
       <Card>

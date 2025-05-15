@@ -50,7 +50,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={redirectTo} />;
   }
   
-  // If user has the required role, render the children
+  // Check if user has one of the allowed roles
   if (allowedRoles.includes(user.role)) {
     return <>{children}</>;
   }
@@ -62,13 +62,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     variant: "destructive",
   });
   
+  // Redirect to appropriate dashboard based on user role
   if (user.role === 'administrator') {
     return <Navigate to="/admin/dashboard" />;
   } else if (user.role === 'proiectant') {
     return <Navigate to="/projects" />;
-  } else {
+  } else if (user.role === 'client') {
     return <Navigate to="/catalog" />;
   }
+  
+  // Default fallback to home
+  return <Navigate to="/" />;
 };
 
 export default ProtectedRoute;
