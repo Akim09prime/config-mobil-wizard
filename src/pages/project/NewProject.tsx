@@ -196,10 +196,9 @@ const NewProject: React.FC = () => {
       height: 720,
       depth: 560,
       price: 0,
-      // Add the missing required properties
-      materials: [], // Changed from 'material' to 'materials'
-      quantity: 1,
-      accessories: [], // This should include quantity property for each accessory
+      // Add all required properties according to the global Cabinet interface
+      materials: [],
+      accessories: [],
       totalCost: 0
     };
     setCurrentCabinet(newCabinet);
