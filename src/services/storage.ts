@@ -103,11 +103,14 @@ export function remove(key: StorageKeys, id: string): boolean {
 export interface Subcategory {
   id: string;
   name: string;
+  image?: string;
+  subcategories?: Subcategory[];
 }
 
 export interface Category {
   id: string;
   name: string;
+  image?: string;
   subcategories: Subcategory[];
 }
 
@@ -150,6 +153,105 @@ export function saveTaxonomies(taxonomies: Taxonomies): boolean {
 
 // Add alias for updateTaxonomies
 export const updateTaxonomies = saveTaxonomies;
+
+// Export/import functions for category-specific data
+export function exportCategoryData(taxonomyType: keyof Taxonomies, categoryName: string): string {
+  try {
+    const taxonomies = getTaxonomies();
+    const category = taxonomies[taxonomyType].find(cat => cat.name === categoryName);
+    
+    if (!category) {
+      throw new Error(`Category ${categoryName} not found`);
+    }
+    
+    // Find all items with this category
+    let items: any[] = [];
+    
+    if (taxonomyType === 'materialTypes') {
+      items = getAll(StorageKeys.MATERIALS).filter(
+        (item: any) => item.category === categoryName
+      );
+    } else if (taxonomyType === 'accessoryCategories') {
+      items = getAll(StorageKeys.ACCESSORIES).filter(
+        (item: any) => item.category === categoryName
+      );
+    } else if (taxonomyType === 'componentCategories') {
+      items = getAll(StorageKeys.COMPONENTS).filter(
+        (item: any) => item.category === categoryName
+      );
+    }
+    
+    return JSON.stringify({
+      category,
+      items
+    });
+  } catch (error) {
+    console.error(`Failed to export data for category ${categoryName}:`, error);
+    throw error;
+  }
+}
+
+export function importCategoryData(data: string): boolean {
+  try {
+    const parsedData = JSON.parse(data);
+    const { category, items } = parsedData;
+    
+    if (!category || !category.name || !category.id) {
+      throw new Error('Invalid category data');
+    }
+    
+    // Determine storage key based on category type
+    let storageKey: StorageKeys;
+    let taxonomyType: keyof Taxonomies;
+    
+    if (category.id.startsWith('mat_')) {
+      storageKey = StorageKeys.MATERIALS;
+      taxonomyType = 'materialTypes';
+    } else if (category.id.startsWith('acc_')) {
+      storageKey = StorageKeys.ACCESSORIES;
+      taxonomyType = 'accessoryCategories';
+    } else if (category.id.startsWith('comp_')) {
+      storageKey = StorageKeys.COMPONENTS;
+      taxonomyType = 'componentCategories';
+    } else {
+      taxonomyType = 'categories';
+      storageKey = StorageKeys.CABINETS;
+    }
+    
+    // Update or create the category
+    const taxonomies = getTaxonomies();
+    const categoryIndex = taxonomies[taxonomyType].findIndex(cat => cat.id === category.id);
+    
+    if (categoryIndex >= 0) {
+      taxonomies[taxonomyType][categoryIndex] = category;
+    } else {
+      taxonomies[taxonomyType].push(category);
+    }
+    
+    updateTaxonomies(taxonomies);
+    
+    // Import items if any
+    if (items && items.length) {
+      const existingItems = getAll(storageKey);
+      const existingIds = new Set(existingItems.map((item: any) => item.id));
+      
+      // Filter out items that already exist
+      const newItems = items.filter((item: any) => !existingIds.has(item.id));
+      
+      if (newItems.length) {
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify([...existingItems, ...newItems])
+        );
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to import category data:', error);
+    return false;
+  }
+}
 
 // Settings interface
 export interface Settings {
@@ -201,7 +303,7 @@ export function getProjects<T>(): T[] {
   return getAll<T>(StorageKeys.PROJECTS);
 }
 
-// Fix: Update getFurniturePresets to correctly work with the Cabinet interface
-export function getFurniturePresets<T extends Cabinet>(): T[] {
+// Get furniture presets
+export function getFurniturePresets<T extends { isPreset?: boolean }>(): T[] {
   return getAll<T>(StorageKeys.CABINETS).filter(cabinet => cabinet.isPreset === true);
 }

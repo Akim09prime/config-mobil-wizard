@@ -10,6 +10,7 @@ interface TaxonomySelectProps {
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  includeAllOption?: boolean;
 }
 
 export const TaxonomySelect: React.FC<TaxonomySelectProps> = ({
@@ -17,7 +18,8 @@ export const TaxonomySelect: React.FC<TaxonomySelectProps> = ({
   value,
   onChange,
   placeholder = 'Selectează...',
-  disabled = false
+  disabled = false,
+  includeAllOption = true
 }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -63,8 +65,7 @@ export const TaxonomySelect: React.FC<TaxonomySelectProps> = ({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {/* Change the empty string to "all" */}
-        {value !== '' && (
+        {includeAllOption && value !== '' && (
           <SelectItem value="all">Toate categoriile</SelectItem>
         )}
         {categories.length === 0 ? (
@@ -90,8 +91,19 @@ export const SubcategorySelect: React.FC<{
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
-}> = ({ type, categoryName, value, onChange, placeholder = 'Selectează...', disabled = false }) => {
-  const [subcategories, setSubcategories] = useState<{ id: string; name: string; }[]>([]);
+  parentSubcategoryId?: string;
+  includeAllOption?: boolean;
+}> = ({ 
+  type, 
+  categoryName, 
+  value, 
+  onChange, 
+  placeholder = 'Selectează...', 
+  disabled = false,
+  parentSubcategoryId,
+  includeAllOption = true
+}) => {
+  const [subcategories, setSubcategories] = useState<{ id: string; name: string; image?: string; }[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -109,8 +121,31 @@ export const SubcategorySelect: React.FC<{
             (cat: Category) => cat.name === categoryName
           );
           
-          if (category && category.subcategories) {
-            setSubcategories(category.subcategories);
+          if (category) {
+            if (parentSubcategoryId) {
+              // Find nested subcategories
+              const findNestedSubcategories = (subcats: any[], parentId: string): any[] => {
+                for (const subcat of subcats) {
+                  if (subcat.id === parentId) {
+                    return subcat.subcategories || [];
+                  }
+                  if (subcat.subcategories && subcat.subcategories.length > 0) {
+                    const found = findNestedSubcategories(subcat.subcategories, parentId);
+                    if (found.length > 0) return found;
+                  }
+                }
+                return [];
+              };
+              
+              const nestedSubcategories = findNestedSubcategories(
+                category.subcategories || [],
+                parentSubcategoryId
+              );
+              setSubcategories(nestedSubcategories);
+            } else {
+              // Get top-level subcategories
+              setSubcategories(category.subcategories || []);
+            }
           } else {
             console.warn(`No subcategories found for category: ${categoryName} in type: ${type}`);
             setSubcategories([]);
@@ -129,7 +164,7 @@ export const SubcategorySelect: React.FC<{
     };
 
     loadSubcategories();
-  }, [type, categoryName]);
+  }, [type, categoryName, parentSubcategoryId]);
 
   if (loading) {
     return (
@@ -147,8 +182,7 @@ export const SubcategorySelect: React.FC<{
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {/* Change the empty string to "all" */}
-        {value !== '' && (
+        {includeAllOption && value !== '' && (
           <SelectItem value="all">Toate subcategoriile</SelectItem>
         )}
         {subcategories.length === 0 ? (
