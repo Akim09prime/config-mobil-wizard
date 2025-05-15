@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import CabinetConfigurator from './CabinetConfigurator';
 import { normalizeCabinet } from '@/utils/cabinetHelpers';
+import { toast } from '@/hooks/use-toast';
 
 interface CabinetWrapperProps {
   open: boolean;
@@ -43,6 +44,10 @@ const CabinetWrapper: React.FC<CabinetWrapperProps> = ({
     console.log('🔧 CabinetWrapper handleSave called with cabinet:', cabinet);
     const normalizedCabinet = normalizeCabinet(cabinet);
     onSave(normalizedCabinet);
+    toast({
+      title: "Succes",
+      description: "Corp adăugat în proiect"
+    });
   };
 
   // If not open, don't render the CabinetConfigurator
