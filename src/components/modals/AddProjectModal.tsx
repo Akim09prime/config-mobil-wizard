@@ -199,7 +199,8 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose, onProj
                 <SelectValue placeholder="Selectați categoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nicio categorie</SelectItem>
+                {/* Changed from empty string to "none" to avoid the error */}
+                <SelectItem value="none">Nicio categorie</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.name}>
                     {category.name}
@@ -220,7 +221,8 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose, onProj
                   <SelectValue placeholder="Selectați subcategoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nicio subcategorie</SelectItem>
+                  {/* Changed from empty string to "none" to avoid the error */}
+                  <SelectItem value="none">Nicio subcategorie</SelectItem>
                   {subcategories.map((subcategory) => (
                     <SelectItem key={subcategory.id} value={subcategory.name}>
                       {subcategory.name}
@@ -242,7 +244,8 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose, onProj
                   <SelectValue placeholder="Selectați un corp" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Niciun corp</SelectItem>
+                  {/* Changed from empty string to "none" to avoid the error */}
+                  <SelectItem value="none">Niciun corp</SelectItem>
                   {filteredPresets.map((preset) => (
                     <SelectItem key={preset.id} value={preset.id}>
                       {preset.name}

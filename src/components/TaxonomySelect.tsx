@@ -63,8 +63,9 @@ export const TaxonomySelect: React.FC<TaxonomySelectProps> = ({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
+        {/* Change the empty string to "all" */}
         {value !== '' && (
-          <SelectItem value="">Toate categoriile</SelectItem>
+          <SelectItem value="all">Toate categoriile</SelectItem>
         )}
         {categories.length === 0 ? (
           <SelectItem value="no-options" disabled>
@@ -146,8 +147,9 @@ export const SubcategorySelect: React.FC<{
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
+        {/* Change the empty string to "all" */}
         {value !== '' && (
-          <SelectItem value="">Toate subcategoriile</SelectItem>
+          <SelectItem value="all">Toate subcategoriile</SelectItem>
         )}
         {subcategories.length === 0 ? (
           <SelectItem value="no-subcategories" disabled>

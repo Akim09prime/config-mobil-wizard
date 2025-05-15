@@ -235,7 +235,8 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
                 <SelectValue placeholder="Selectați categoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nicio categorie</SelectItem>
+                {/* Changed from empty string to "none" to avoid the error */}
+                <SelectItem value="none">Nicio categorie</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.name}>
                     {category.name}
@@ -256,7 +257,8 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
                   <SelectValue placeholder="Selectați subcategoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nicio subcategorie</SelectItem>
+                  {/* Changed from empty string to "none" to avoid the error */}
+                  <SelectItem value="none">Nicio subcategorie</SelectItem>
                   {subcategories.map((subcategory) => (
                     <SelectItem key={subcategory.id} value={subcategory.name}>
                       {subcategory.name}
@@ -280,7 +282,8 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
                       <SelectValue placeholder="Selectați un corp" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Selectează corp...</SelectItem>
+                      {/* Changed from empty string to "none" to avoid the error */}
+                      <SelectItem value="none">Selectează corp...</SelectItem>
                       {filteredPresets.map((preset) => (
                         <SelectItem key={preset.id} value={preset.id}>
                           {preset.name}
@@ -291,7 +294,7 @@ const EditProjectModal: React.FC<EditProjectModalProps> = ({
                   <Button 
                     type="button" 
                     onClick={handleAddPreset}
-                    disabled={!selectedPreset}
+                    disabled={!selectedPreset || selectedPreset === "none"}
                   >
                     Adaugă
                   </Button>
