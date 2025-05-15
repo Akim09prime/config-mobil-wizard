@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StorageKeys, create } from '@/services/storage';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 
 interface AddProjectModalProps {
   open: boolean;
@@ -32,7 +32,11 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose, onProj
     e.preventDefault();
     
     if (!name || !client) {
-      toast.error('Numele proiectului și clientul sunt obligatorii');
+      toast({
+        title: 'Eroare',
+        description: 'Numele proiectului și clientul sunt obligatorii',
+        variant: 'destructive'
+      });
       return;
     }
 
@@ -51,13 +55,20 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose, onProj
 
       create(StorageKeys.PROJECTS, newProject);
       
-      toast.success('Proiectul a fost adăugat cu succes');
+      toast({
+        title: 'Succes',
+        description: 'Proiectul a fost adăugat cu succes'
+      });
       
       onProjectAdded();
       onClose();
     } catch (error) {
       console.error('Error adding project:', error);
-      toast.error('Nu s-a putut adăuga proiectul');
+      toast({
+        title: 'Eroare',
+        description: 'Nu s-a putut adăuga proiectul',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -66,6 +77,9 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ open, onClose, onProj
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Adaugă proiect nou</DialogTitle>
+          <DialogDescription>
+            Completați detaliile pentru a crea un proiect nou.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

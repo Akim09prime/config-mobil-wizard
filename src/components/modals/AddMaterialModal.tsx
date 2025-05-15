@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -125,6 +124,9 @@ const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ open, onClose, onMa
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Adaugă material nou</DialogTitle>
+          <DialogDescription>
+            Completați detaliile pentru a adăuga un material nou în sistem.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
